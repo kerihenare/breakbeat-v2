@@ -1,0 +1,42 @@
+# OTel instrumentation is NestJS/BullMQ-native, with one trace per Job and a three-signal split
+
+## Status
+
+accepted
+
+## Context
+
+Early notes described observability as an "OTLP emitter" built on `@envelop/opentelemetry` in GraphQL Yoga, a Pino transport, and trace propagation. That plan was imported from a different project: Breakbeat has **no GraphQL and no Yoga** — it is **NestJS 11 on Express** serving server-rendered HTML (htmx/nunjucks/lit), with the actual pipeline running in **BullMQ** background workers. `@envelop/opentelemetry` is a Yoga-only plugin and has no attachment point here.
+
+The value of tracing in Breakbeat is almost entirely in watching **one Job move through its pipeline** (Resolve → Search → Filter → Verify → Classify → Enhance → Summarise) and accounting for the **external calls** that dominate its cost and latency (Anthropic Haiku, Tavily search/extract, BrandFetch). The HTTP surface is thin — a form POST that enqueues a Job, and an SSE stream the UI watches. The infrastructure is already chosen in `docker-compose.yml`: **otel-lgtm** (Grafana Tempo / Loki / Mimir + a bundled OTel Collector) on OTLP 4317/4318, and **Bugsink** (a self-hosted, Sentry-protocol error sink) targeted by the existing `@sentry/nestjs` dependency.
+
+## Decision
+
+Instrument with the **OTel Node SDK** (`@opentelemetry/sdk-node` + `auto-instrumentations-node` for Express, ioredis, postgres, undici) plus **manual pipeline spans**. The shape:
+
+- **One trace per Job.** One BullMQ job per Job; stages run **in-process, sequentially** (not a per-stage queue/flow). The only context that crosses a process boundary is enqueue→worker.
+- **New trace root at the worker, linked — not continued.** Enqueue injects `traceparent` into the job data; the worker starts a fresh root span `job.pipeline` carrying a **span link** back to the enqueue span. A continued trace would fold dead queue-wait (and nonsensical re-run/scheduled timing) into trace duration.
+- **Span granularity.** One **stage span** per pipeline stage carrying aggregate attributes (`results.in`/`results.out`, `excluded.{code}` counts, `tokens.total`, `cost.total`, `warnings`). Child spans **only for real external calls** — each Haiku call (OTel GenAI conventions: `gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.*`, `gen_ai.response.finish_reasons`, plus derived cost), each Tavily/BrandFetch call. Outlier per-Result outcomes (an Exclusion, a verify flip at full-text, a per-Result Warning) are **span events** on the stage span. Happy-path per-Result work emits **no span and no event** — it lives in aggregates and metrics.
+- **The PRD-5 stages map to ONE stage span, `analyze`.** Verify / Classify / Enhance are distinct *domain* stages (separate fields, separate failure semantics) but they do **not** execute as three time-ordered stages: the work is snippet-Verify + snippet-Classify (two cheap calls) → Tavily Extract → one **fused** Haiku call that re-Verifies, re-Classifies, and Enhances together (ADR 0003). So a single `analyze` stage span owns them, with `results.in` = the survivors Filter handed it and `results.out` = those still `included` after the full-text re-pass. The two-pass shape shows up in the **child-span timeline** (snippet calls → Extract → fused call), not in stage-span boundaries. The fused call is **one child span** whose GenAI attributes carry the combined token/cost — it is never split three ways (splitting would re-introduce the per-stage fiction ADR 0003 rejects). Extract is not its own stage span; it is the Tavily Extract child span under `analyze`. The closed `stage` metric-label set is therefore `resolve | search | filter | analyze | summarise`.
+- **Three-signal split.** **Traces + logs + metrics → otel-lgtm** via the bundled Collector (OTLP HTTP/protobuf, 4318). **Errors → Bugsink** via `@sentry/nestjs` with `tracesSampleRate: 0` (Bugsink cannot ingest spans — this is mandatory, not a preference); `@sentry/opentelemetry` stamps the active `trace_id` onto error events for Grafana↔Bugsink deep-link. Logs go via `nestjs-pino` → multi-transport: `pino-opentelemetry-transport` (→ Loki, trace-correlated) **and** stdout as a durable floor if the Collector is down.
+- **Metrics: bounded aggregates only.** `job.duration`/`job.completed`, `stage.duration`, `llm.tokens`/`llm.cost`, `external.request`, `results`, `warnings`, and a `queue.depth` observable gauge. Labels are **closed/small sets only** — stage, model, exclusion_code, terminal_state, content_type, service. **Never** `job.id`, company anchor, or URL on a metric (that is a Mimir cardinality bomb); per-Job drill-down is what traces are for.
+- **Status maps to the domain.** `recordException` + span status `ERROR` **only** on an unexpected throw or a Job-failing condition. A **Warning is `OK` + a span event** (`warning`, `warning.type`), never `ERROR` — a Warning is a partial *success*. `done_with_warnings` is an `OK` root span. **Bugsink is fed by the failure condition only**, never Warnings.
+- **Identity & sampling.** Per-process `service.name`: `breakbeat-web` and `breakbeat-worker`. `ParentBased(AlwaysOnSampler)` at 100% (low-throughput, deliberate-user-action tool); tail-sampling, if ever needed, is deferred to the Collector, not added in-app.
+- **Bootstrap & lifecycle.** SDK lives in a standalone `instrumentation.ts` loaded via `node --import` on **both** entrypoints, before any app module imports. Shutdown order on SIGTERM/SIGINT is **drain worker → close app → flush SDK** (BatchSpanProcessor, bounded flush timeout) so an interrupted Job's telemetry survives a deploy.
+- **Config & fail-soft.** Standard `OTEL_*` env vars (in `.env.example`); `OTEL_SDK_DISABLED=true` in test/CI. The exporter is **fail-soft** — a down/unreachable Collector retries then drops, and **never throws into or blocks the pipeline**. This is the *only* sanctioned silent failure; a startup warning fires if the SDK is disabled or the endpoint is unset, so prod can't silently run blind.
+- **Route hygiene.** The SSE stream route and the Terminus health route are **excluded** from HTTP span creation (the SSE connection's lifetime is "how long the human watched," not a unit of work). SSE health is captured as metrics (active-connections gauge, messages-sent counter) — no span, no span-per-message.
+
+## Why
+
+- The pipeline *is* the product; tracing must follow the BullMQ worker, not a GraphQL request that doesn't exist. Topology A keeps the entire pipeline in one trace with zero cross-job plumbing beyond the single enqueue link.
+- Linking (not continuing) the enqueue→worker hop measures pipeline latency cleanly and stays sane under re-runs and scheduled Jobs.
+- Span-per-real-call plus stage aggregates keeps a typical Job trace in the low hundreds of spans (dominated by calls we actually pay for) instead of the thousands a span-per-Result-per-stage model would produce.
+- Metrics-for-aggregates / traces-for-detail is the only division that keeps Mimir cardinality bounded while preserving per-Job drill-down.
+- The infra is already opinionated: Bugsink can't take spans (forcing the signal split), and otel-lgtm has no stdout scraper (forcing the OTLP-logs transport to land logs in Loki with correlation).
+
+## Consequences
+
+- **Telemetry inherits the anti-echo discipline.** Span attributes and log bodies are a data sink shipped to a backend. The same rule that keeps raw model output out of `exclusion_detail` (the prompt-injection echo channel) applies here: **never** put prompt text, raw completions, or scraped page text on a span or log — counts, model id, finish reason, latency, cost, and the Zod-validated structured output only.
+- **Warnings stay fully visible but never count as failures.** Grafana error-rate and Bugsink issues both mean *actual failures*; Warnings live as span events plus the `warnings` metric counter. Do not "fix" a noisy error rate by marking Warning spans `ERROR` — that re-breaks the domain model.
+- **Do not reintroduce `@envelop`/Yoga or a hand-rolled second OTel SDK.** There is exactly one tracer-provider owner (our `sdk-node`); `@sentry/nestjs` runs with tracing disabled and contributes errors only. Two SDKs would fight over the global provider and silently drop half the spans.
+- **Per-stage queue isolation (BullMQ Flows) is deferred, not rejected.** If a stage ever needs independent retry/backpressure, the trade is added `traceparent` propagation on every parent→child job hop. Add that propagation at the same time, never after.

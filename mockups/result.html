@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aglow · Breakbeat</title>
+<style>
+/* ============================================================
+   Breakbeat — design tokens (from DESIGN.md)
+   ============================================================ */
+:root {
+  /* newsprint paper ramp */
+  --newsprint: #efe8e3;
+  --surface: #fcfaf9;
+  --raised: #f7f3ef;
+  --sunken: #f3ece7;
+  --border: #ebe0d8;
+  --border-strong: #d8cbc0;
+  /* ink ramp */
+  --ink: #292a2a;
+  --ink-strong: #1d1e1e;
+  --ink-control: #3f3e3e;
+  --ink-toned: #5c5959;
+  --ink-muted: #6f6b6b;
+  --ink-dimmed: #8c8888;
+  /* brand brights + their text steps */
+  --blue: #46bbff;        --blue-text: #1071b3;
+  --green: #56e69a;       --green-text: #127541;
+  --pink: #fd9aa4;        --pink-text: #a02c38;
+  --focus: #46bbff;
+  /* group tints (icon tiles) */
+  --tint-blue: rgba(70,187,255,0.14);
+  --tint-green: rgba(86,230,154,0.18);
+  --tint-pink: rgba(253,154,164,0.20);
+  /* radius */
+  --r-sm: 6px; --r-md: 8px; --r-lg: 16px; --r-pill: 999px;
+  /* warm shadows */
+  --shadow-float: 0 1px 2px rgba(41,42,42,0.04), 0 10px 28px rgba(61,51,43,0.07);
+  --shadow-lifted: 0 2px 4px rgba(41,42,42,0.05), 0 16px 40px rgba(61,51,43,0.10);
+  /* type */
+  --font: "FK Grotesk", -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  /* z-index scale */
+  --z-sticky: 100; --z-tooltip: 600;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--newsprint);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: var(--blue-text); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ---------- layout shell ---------- */
+.site {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 36px;
+}
+.wordmark {
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+  color: var(--ink-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.wordmark .glyph {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  background: var(--ink); color: var(--surface);
+  border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 700;
+}
+.topnav { display: flex; gap: 22px; font-size: 0.875rem; }
+.topnav a { color: var(--ink-muted); font-weight: 500; }
+.topnav a:hover { color: var(--ink); text-decoration: none; }
+.topnav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+
+.breadcrumb {
+  font-size: 0.8125rem;
+  color: var(--ink-toned);
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.breadcrumb a { color: var(--ink-toned); }
+.breadcrumb a:hover { color: var(--ink); }
+.breadcrumb .sep { color: var(--ink-dimmed); }
+
+/* ============================================================
+   1. COMPANY PROFILE CARD
+   ============================================================ */
+.profile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 76px 1fr auto;
+  gap: 24px;
+  align-items: start;
+}
+.profile__logo {
+  width: 76px; height: 76px;
+  border-radius: 14px;
+  background: var(--sunken);
+  border: 1px solid var(--border);
+  display: grid; place-items: center;
+  overflow: hidden;
+  font-size: 30px; font-weight: 600; color: var(--ink);
+}
+.profile__logo img { width: 100%; height: 100%; object-fit: cover; }
+.profile__name {
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 2px 0 6px;
+  text-wrap: balance;
+}
+.profile__links {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 8px 14px;
+  font-size: 0.875rem;
+  margin-bottom: 14px;
+}
+.profile__links .domain { font-weight: 500; }
+.profile__handle {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink-toned);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  padding: 3px 11px 3px 9px;
+  font-size: 0.8125rem;
+}
+.profile__handle:hover { background: var(--sunken); text-decoration: none; color: var(--ink); }
+.profile__handle svg { width: 13px; height: 13px; }
+.profile__desc {
+  font-size: 1rem;
+  color: var(--ink);
+  max-width: 68ch;
+  margin: 0 0 16px;
+}
+.profile__meta {
+  display: flex; flex-wrap: wrap; gap: 8px 10px;
+  font-size: 0.8125rem; color: var(--ink-toned);
+  align-items: center;
+}
+.tag {
+  background: var(--sunken);
+  border-radius: var(--r-sm);
+  padding: 3px 9px;
+  color: var(--ink-toned);
+  font-weight: 500;
+}
+.profile__aside {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+  text-align: right;
+}
+.aka { font-size: 0.8125rem; color: var(--ink-toned); }
+.aka b { color: var(--ink); font-weight: 600; }
+
+/* status badge (non-color-only: dot/glyph + label) */
+.status {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.8125rem; font-weight: 500;
+  padding: 4px 11px 4px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  white-space: nowrap;
+}
+.status .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.status--done { color: var(--green-text); }
+.status--done .dot { background: var(--green); }
+.status--warn { color: var(--pink-text); }
+.status--warn .dot { background: var(--pink); }
+.status--running { color: var(--ink-toned); }
+.status--running .dot { background: var(--blue); animation: pulse 1.6s ease-in-out infinite; }
+.status--failed { color: var(--pink-text); }
+.status--failed .dot { background: var(--pink-text); }
+.status--pending { color: var(--ink-toned); }
+.status--pending .dot { background: var(--ink-dimmed); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+
+/* warning note inside profile */
+.profile__warn {
+  margin-top: 14px;
+  font-size: 0.8125rem;
+  color: var(--ink-toned);
+  display: flex; gap: 8px; align-items: flex-start;
+}
+.profile__warn svg { width: 15px; height: 15px; color: var(--pink-text); flex: none; margin-top: 1px; }
+
+/* ============================================================
+   ENHANCEMENT SUMMARY
+   ============================================================ */
+.summary {
+  margin: 28px 0 8px;
+  padding: 0 4px;
+}
+.summary__label {
+  font-size: 0.8125rem; font-weight: 600; color: var(--ink-toned);
+  letter-spacing: 0.01em;
+  margin-bottom: 8px;
+}
+.summary__body {
+  font-size: 1rem; color: var(--ink);
+  max-width: 72ch;
+  margin: 0;
+}
+.summary__body b { font-weight: 600; }
+
+/* ============================================================
+   RESULTS HEADER + FILTER TAB (chips)
+   ============================================================ */
+.results-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  margin: 40px 0 14px;
+}
+.results-head h2 {
+  font-size: 1.25rem; font-weight: 600; margin: 0;
+}
+.results-head .count { color: var(--ink-toned); font-weight: 400; }
+.sortnote { font-size: 0.8125rem; color: var(--ink-toned); }
+
+.filters {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 6px;
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 6px 13px;
+  font-size: 0.875rem; font-weight: 500;
+  color: var(--ink-toned);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.chip:hover { background: var(--raised); color: var(--ink); }
+.chip[aria-pressed="true"] {
+  background: var(--ink); color: var(--surface); border-color: var(--ink);
+}
+.chip[aria-pressed="true"] .chip__ico { color: #fff; background: rgba(255,255,255,0.16); }
+.chip[disabled] {
+  background: var(--sunken); color: var(--ink-dimmed);
+  cursor: not-allowed; border-color: var(--border);
+}
+.chip__ico {
+  width: 19px; height: 19px; border-radius: 5px;
+  display: grid; place-items: center; flex: none;
+}
+.chip__ico svg { width: 12px; height: 12px; }
+.chip__count {
+  font-size: 0.75rem; color: inherit; opacity: 0.62;
+  font-variant-numeric: tabular-nums;
+}
+.chip[aria-pressed="true"] .chip__count { opacity: 0.8; }
+/* group colors on chip glyph tiles */
+.g-editorial .chip__ico, .g-editorial.tile { background: var(--tint-blue); color: var(--blue-text); }
+.g-written .chip__ico, .g-written.tile { background: var(--tint-green); color: var(--green-text); }
+.g-social .chip__ico, .g-social.tile { background: var(--tint-pink); color: var(--pink-text); }
+.g-other .chip__ico, .g-other.tile { background: var(--sunken); color: var(--ink-toned); }
+
+/* ============================================================
+   3. SEARCH RESULTS TABLE (flat rows, hairlines — NOT cards)
+   ============================================================ */
+.results { list-style: none; margin: 8px 0 0; padding: 0; }
+.row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 12px;
+  border-top: 1px solid var(--border);
+  border-radius: var(--r-md);
+  text-decoration: none; color: inherit;
+  transition: background 130ms ease;
+}
+.results .row:last-child { border-bottom: 1px solid var(--border); }
+.row:hover { background: var(--raised); }
+.row:hover .row__title { text-decoration: underline; text-underline-offset: 2px; }
+.tile {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: grid; place-items: center; flex: none;
+}
+.tile svg { width: 18px; height: 18px; }
+.row__main { min-width: 0; }
+.row__title {
+  font-size: 1.0625rem; font-weight: 600; line-height: 1.3;
+  color: var(--ink);
+  margin: 0 0 4px;
+  /* clamp to 2 lines */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.row__meta {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.8125rem; color: var(--ink-toned);
+  flex-wrap: wrap;
+}
+.row__meta .src { font-weight: 500; color: var(--ink-toned); }
+.row__meta .dot-sep { color: var(--ink-dimmed); }
+.row__meta .type-label { color: var(--ink-toned); }
+
+/* match score indicator */
+.score { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; width: 88px; }
+.score__num {
+  font-size: 0.875rem; font-weight: 600; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.score__num .lbl { font-size: 0.6875rem; color: var(--ink-dimmed); font-weight: 500; margin-left: 3px; }
+.score__bar {
+  width: 100%; height: 3px; border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.score__fill { height: 100%; background: var(--ink); border-radius: 2px; }
+
+/* verified tick inline */
+.vmark { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; }
+.vmark--verified { color: var(--green-text); }
+.vmark svg { width: 12px; height: 12px; }
+
+/* SSE entrance */
+@keyframes rowin {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.row--new { animation: rowin 200ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* ---------- excluded disclosure ---------- */
+.excluded { margin-top: 18px; }
+.excluded__toggle {
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 11px 14px;
+  font-family: var(--font); font-size: 0.875rem; font-weight: 500;
+  color: var(--ink-toned);
+  cursor: pointer;
+  text-align: left;
+}
+.excluded__toggle:hover { background: var(--raised); color: var(--ink); }
+.excluded__toggle .chev { transition: transform 160ms ease; margin-left: auto; }
+.excluded__toggle svg { width: 15px; height: 15px; }
+.excluded[open] .chev { transform: rotate(180deg); }
+.excluded__list { list-style: none; margin: 2px 0 0; padding: 0; }
+.row--muted .row__title { color: var(--ink-toned); font-weight: 500; }
+.row--muted:hover { background: var(--raised); }
+.exreason {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.75rem; font-weight: 500;
+  padding: 2px 8px; border-radius: var(--r-pill);
+  background: var(--sunken); color: var(--ink-toned);
+  border: 1px solid var(--border);
+}
+.exreason--uncertain { color: var(--ink-toned); }
+.exreason svg { width: 11px; height: 11px; }
+
+/* ============================================================
+   7. PAGINATOR
+   ============================================================ */
+.paginator {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-top: 28px; flex-wrap: wrap;
+}
+.paginator__range { font-size: 0.8125rem; color: var(--ink-toned); font-variant-numeric: tabular-nums; }
+.pages { display: flex; align-items: center; gap: 6px; }
+.pbtn {
+  min-width: 36px; height: 36px; padding: 0 11px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  font-family: var(--font); font-size: 0.875rem; font-weight: 500;
+  color: var(--ink); cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background 130ms ease;
+}
+.pbtn:hover { background: var(--sunken); }
+.pbtn[aria-current="page"] {
+  background: var(--ink); color: var(--surface); border-color: var(--ink); cursor: default;
+}
+.pbtn[disabled] {
+  background: var(--sunken); color: var(--ink-dimmed);
+  cursor: not-allowed; border-color: var(--border);
+}
+.pbtn svg { width: 14px; height: 14px; }
+.pellipsis { color: var(--ink-dimmed); padding: 0 2px; user-select: none; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 720px) {
+  .site { padding: 0 16px 72px; }
+  .profile { grid-template-columns: 56px 1fr; padding: 22px; gap: 16px; }
+  .profile__logo { width: 56px; height: 56px; font-size: 22px; }
+  .profile__aside { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; text-align: left; }
+  .profile__name { font-size: 1.5rem; }
+  .row { grid-template-columns: 30px 1fr; }
+  .tile { width: 30px; height: 30px; }
+  .score { grid-column: 2; flex-direction: row; align-items: center; width: auto; gap: 10px; margin-top: 2px; }
+  .score__bar { width: 60px; }
+  .pages .num-hide { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  .status--running .dot { opacity: 0.7; }
+  .row--new { animation: none; }
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+</style>
+</head>
+<body>
+<div class="site">
+
+  <!-- top bar -->
+  <header class="topbar">
+    <span class="wordmark"><span class="glyph">B</span>Breakbeat</span>
+    <nav class="topnav" aria-label="Primary">
+      <a href="results-list.html">Searches</a>
+      <a href="result.html" aria-current="page">Aglow</a>
+    </nav>
+  </header>
+
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="results-list.html">Searches</a>
+    <span class="sep">/</span>
+    <span>Aglow</span>
+  </nav>
+
+  <!-- ============ 1. COMPANY PROFILE CARD ============ -->
+  <section class="profile" aria-label="Company profile">
+    <div class="profile__logo" aria-hidden="true">A</div>
+    <div>
+      <h1 class="profile__name">Aglow</h1>
+      <div class="profile__links">
+        <a class="domain" href="https://getaglow.co" target="_blank" rel="noopener noreferrer">getaglow.co&nbsp;↗</a>
+        <a class="profile__handle" href="https://www.linkedin.com/company/getaglow" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.94 5a1.94 1.94 0 1 1-3.88 0 1.94 1.94 0 0 1 3.88 0ZM3.4 8.4h3.1V21H3.4V8.4Zm5.5 0h2.97v1.72h.04c.41-.78 1.42-1.6 2.93-1.6 3.13 0 3.71 2.06 3.71 4.74V21h-3.1v-5.5c0-1.31-.02-3-1.83-3-1.83 0-2.11 1.43-2.11 2.9V21H8.9V8.4Z"/></svg>
+          getaglow
+        </a>
+        <a class="profile__handle" href="https://www.instagram.com/aglow_app/" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @aglow_app
+        </a>
+      </div>
+      <p class="profile__desc">A subscription membership platform for the beauty and aesthetics industry, connecting clients with salons and clinics through recurring treatment plans across Australia and New Zealand.</p>
+      <div class="profile__meta">
+        <span class="tag">Beauty &amp; wellness</span>
+        <span class="tag">Membership / SaaS</span>
+        <span class="tag">ANZ</span>
+      </div>
+      <p class="profile__warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+        <span>2 same-name companies were negative-boosted out of results: <b>Aglow&nbsp;International</b> (faith non-profit) and <b>Averra&nbsp;Glow</b> (skincare retailer).</span>
+      </p>
+    </div>
+    <div class="profile__aside">
+      <span class="status status--done"><span class="dot"></span>Done</span>
+      <span class="aka">Also known as <b>Aglow App</b></span>
+    </div>
+  </section>
+
+  <!-- ============ ENHANCEMENT SUMMARY ============ -->
+  <section class="summary" aria-label="Coverage summary">
+    <div class="summary__label">Summary</div>
+    <p class="summary__body">Coverage centres on Aglow's <b>AUD&nbsp;$1.25M seed raise</b> (August&nbsp;2024), backed by the founders of Tyro and Timely, and its early traction in the ANZ beauty-membership market. Trade publications situate the company within Australia's <b>$11.8B beauty sector</b> and a wider shift toward clinic memberships. Sentiment is broadly <b>positive</b>, framed around growth and category creation.</p>
+  </section>
+
+  <!-- ============ RESULTS HEADER + 4. FILTER TAB ============ -->
+  <div class="results-head">
+    <h2>Results <span class="count">· 11 included</span></h2>
+    <span class="sortnote">Sorted by match score</span>
+  </div>
+
+  <div class="filters" role="group" aria-label="Filter by content type">
+    <button class="chip" aria-pressed="true">
+      All <span class="chip__count">11</span>
+    </button>
+    <button class="chip g-editorial" aria-pressed="false">
+      <span class="chip__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h13v14H6a2 2 0 0 1-2-2V5Z"/><path d="M17 8h3v9a2 2 0 0 1-2 2"/><path d="M7 8h7M7 11h7M7 14h5"/></svg></span>
+      News <span class="chip__count">3</span>
+    </button>
+    <button class="chip g-editorial" aria-pressed="false">
+      <span class="chip__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V4Z"/><path d="M8 8h6M8 11h6M8 14h4"/></svg></span>
+      Trade <span class="chip__count">3</span>
+    </button>
+    <button class="chip g-written" aria-pressed="false">
+      <span class="chip__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></span>
+      Blog <span class="chip__count">2</span>
+    </button>
+    <button class="chip g-written" aria-pressed="false">
+      <span class="chip__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+      Newsletter <span class="chip__count">1</span>
+    </button>
+    <button class="chip g-social" aria-pressed="false">
+      <span class="chip__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10Z"/></svg></span>
+      Social <span class="chip__count">2</span>
+    </button>
+    <button class="chip g-social" aria-pressed="false" disabled>
+      <span class="chip__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></span>
+      Podcast <span class="chip__count">0</span>
+    </button>
+  </div>
+
+  <!-- ============ 3. SEARCH RESULTS TABLE ============ -->
+  <ul class="results" aria-label="Search results" aria-live="polite">
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-editorial" title="News article" aria-label="News article"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h13v14H6a2 2 0 0 1-2-2V5Z"/><path d="M17 8h3v9a2 2 0 0 1-2 2"/><path d="M7 8h7M7 11h7M7 14h5"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Sydney startup Aglow raises $1.25M as its beauty-industry membership model gains traction</p>
+        <span class="row__meta"><span class="src">businessnewsaustralia.com</span><span class="dot-sep">·</span><span>19 Aug 2024</span><span class="dot-sep">·</span><span class="type-label">News article</span><span class="dot-sep">·</span><span class="vmark vmark--verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg>Verified</span></span>
+      </span>
+      <span class="score"><span class="score__num">98<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:98%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-editorial" title="News article" aria-label="News article"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h13v14H6a2 2 0 0 1-2-2V5Z"/><path d="M17 8h3v9a2 2 0 0 1-2 2"/><path d="M7 8h7M7 11h7M7 14h5"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Subscription pampering startup Aglow raises $1.25 million from Tyro, Timely founders</p>
+        <span class="row__meta"><span class="src">startupdaily.net</span><span class="dot-sep">·</span><span>20 Aug 2024</span><span class="dot-sep">·</span><span class="type-label">News article</span><span class="dot-sep">·</span><span class="vmark vmark--verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg>Verified</span></span>
+      </span>
+      <span class="score"><span class="score__num">96<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:96%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-editorial" title="News article" aria-label="News article"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h13v14H6a2 2 0 0 1-2-2V5Z"/><path d="M17 8h3v9a2 2 0 0 1-2 2"/><path d="M7 8h7M7 11h7M7 14h5"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Five NZ &amp; Aussie ANZ startups raised $38 million this week</p>
+        <span class="row__meta"><span class="src">smartcompany.com.au</span><span class="dot-sep">·</span><span>23 Aug 2024</span><span class="dot-sep">·</span><span class="type-label">News article</span></span>
+      </span>
+      <span class="score"><span class="score__num">89<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:89%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-written" title="Newsletter" aria-label="Newsletter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Aussie startup VC summary — 17th August 2024</p>
+        <span class="row__meta"><span class="src">overnightsuccess.vc</span><span class="dot-sep">·</span><span>17 Aug 2024</span><span class="dot-sep">·</span><span class="type-label">Newsletter</span><span class="dot-sep">·</span><span class="vmark vmark--verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg>Verified</span></span>
+      </span>
+      <span class="score"><span class="score__num">85<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:85%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-editorial" title="Trade publication" aria-label="Trade publication"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V4Z"/><path d="M8 8h6M8 11h6M8 14h4"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Hair &amp; beauty industry report for Q1 2025 uncovers where growth, loyalty and client spend are shifting</p>
+        <span class="row__meta"><span class="src">mochagroup.com.au</span><span class="dot-sep">·</span><span>11 Apr 2025</span><span class="dot-sep">·</span><span class="type-label">Trade publication</span><span class="dot-sep">·</span><span class="vmark vmark--verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg>Verified</span></span>
+      </span>
+      <span class="score"><span class="score__num">82<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:82%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-editorial" title="Trade publication" aria-label="Trade publication"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V4Z"/><path d="M8 8h6M8 11h6M8 14h4"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">A TGA-compliant game-changer for clinics and clients</p>
+        <span class="row__meta"><span class="src">spaandclinic.com.au</span><span class="dot-sep">·</span><span>3 Mar 2025</span><span class="dot-sep">·</span><span class="type-label">Trade publication</span></span>
+      </span>
+      <span class="score"><span class="score__num">78<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:78%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-editorial" title="Trade publication" aria-label="Trade publication"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V4Z"/><path d="M8 8h6M8 11h6M8 14h4"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Clinic memberships: smart for business</p>
+        <span class="row__meta"><span class="src">professionalbeauty.com.au</span><span class="dot-sep">·</span><span>28 Feb 2025</span><span class="dot-sep">·</span><span class="type-label">Trade publication</span></span>
+      </span>
+      <span class="score"><span class="score__num">76<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:76%"></span></span></span>
+    </a></li>
+
+    <li><a class="row row--new" href="page.html">
+      <span class="tile g-social" title="Major social post" aria-label="Major social post"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10Z"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Founder interview: building Aglow's membership model for beauty clinics</p>
+        <span class="row__meta"><span class="src">youtube.com</span><span class="dot-sep">·</span><span>5 Sep 2024</span><span class="dot-sep">·</span><span class="type-label">Major social post</span></span>
+      </span>
+      <span class="score"><span class="score__num">74<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:74%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-written" title="Blog post" aria-label="Blog post"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">New research reveals women's strong commitment to beauty treatments</p>
+        <span class="row__meta"><span class="src">spaandclinic.com.au</span><span class="dot-sep">·</span><span>14 Jan 2025</span><span class="dot-sep">·</span><span class="type-label">Blog post</span></span>
+      </span>
+      <span class="score"><span class="score__num">63<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:63%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-other" title="Other" aria-label="Other"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Aglow — company profile &amp; capital raise</p>
+        <span class="row__meta"><span class="src">primarymarkets.com</span><span class="dot-sep">·</span><span>2 Sep 2024</span><span class="dot-sep">·</span><span class="type-label">Other</span></span>
+      </span>
+      <span class="score"><span class="score__num">58<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:58%"></span></span></span>
+    </a></li>
+
+    <li><a class="row" href="page.html">
+      <span class="tile g-written" title="Blog post" aria-label="Blog post"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></span>
+      <span class="row__main">
+        <p class="row__title">Project: Aglow — brand &amp; product case study</p>
+        <span class="row__meta"><span class="src">previously.co</span><span class="dot-sep">·</span><span>12 Nov 2024</span><span class="dot-sep">·</span><span class="type-label">Blog post</span></span>
+      </span>
+      <span class="score"><span class="score__num">55<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:55%"></span></span></span>
+    </a></li>
+
+  </ul>
+
+  <!-- collapsed excluded + lower-confidence -->
+  <details class="excluded">
+    <summary class="excluded__toggle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+      Show 6 lower-confidence &amp; excluded results
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </summary>
+    <ul class="excluded__list">
+
+      <li><a class="row row--muted" href="page.html">
+        <span class="tile g-other" title="Other" aria-label="Other"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></span>
+        <span class="row__main">
+          <p class="row__title">The Elevate Series — course for beauty business owners</p>
+          <span class="row__meta"><span class="src">jadestart.com</span><span class="dot-sep">·</span><span>—</span><span class="dot-sep">·</span><span class="exreason exreason--uncertain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17h.01M12 13a2 2 0 1 0-2-2"/><circle cx="12" cy="12" r="9"/></svg>Uncertain match</span></span>
+        </span>
+        <span class="score"><span class="score__num" style="color:var(--ink-toned)">41<span class="lbl">/100</span></span><span class="score__bar"><span class="score__fill" style="width:41%;background:var(--ink-dimmed)"></span></span></span>
+      </a></li>
+
+      <li><a class="row row--muted" href="page.html">
+        <span class="tile g-other" title="Excluded" aria-label="Excluded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+        <span class="row__main">
+          <p class="row__title">Aglow International — 2025 Global Conference messages</p>
+          <span class="row__meta"><span class="src">aglow.org</span><span class="dot-sep">·</span><span class="exreason"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6"/></svg>Off-topic · different entity</span></span>
+        </span>
+        <span class="score"></span>
+      </a></li>
+
+      <li><a class="row row--muted" href="page.html">
+        <span class="tile g-other" title="Excluded" aria-label="Excluded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+        <span class="row__main">
+          <p class="row__title">Aglow — Articles</p>
+          <span class="row__meta"><span class="src">getaglow.co</span><span class="dot-sep">·</span><span class="exreason"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2M3 10h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8Z"/></svg>Own channel</span></span>
+        </span>
+        <span class="score"></span>
+      </a></li>
+
+      <li><a class="row row--muted" href="page.html">
+        <span class="tile g-other" title="Excluded" aria-label="Excluded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+        <span class="row__main">
+          <p class="row__title">Aglow on LinkedIn: #beautymemberships #getaglow</p>
+          <span class="row__meta"><span class="src">linkedin.com</span><span class="dot-sep">·</span><span class="exreason"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2M3 10h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8Z"/></svg>Own channel</span></span>
+        </span>
+        <span class="score"></span>
+      </a></li>
+
+      <li><a class="row row--muted" href="page.html">
+        <span class="tile g-other" title="Excluded" aria-label="Excluded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+        <span class="row__main">
+          <p class="row__title">NASA's Starliner crew set to return in 2025</p>
+          <span class="row__meta"><span class="src">abcnews.go.com</span><span class="dot-sep">·</span><span class="exreason"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6"/></svg>Off-topic · no mention</span></span>
+        </span>
+        <span class="score"></span>
+      </a></li>
+
+      <li><a class="row row--muted" href="page.html">
+        <span class="tile g-other" title="Excluded" aria-label="Excluded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+        <span class="row__main">
+          <p class="row__title">Aglow Treatment Wallet on the App Store</p>
+          <span class="row__meta"><span class="src">apps.apple.com</span><span class="dot-sep">·</span><span class="exreason"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Ecommerce</span></span>
+        </span>
+        <span class="score"></span>
+      </a></li>
+
+    </ul>
+  </details>
+
+  <!-- ============ 7. PAGINATOR ============ -->
+  <nav class="paginator" aria-label="Results pages">
+    <span class="paginator__range">1–11 of 11</span>
+    <div class="pages">
+      <button class="pbtn" disabled aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button class="pbtn" aria-current="page">1</button>
+      <button class="pbtn" disabled aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+  </nav>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-09T00:00:00Z",
+  "title": "Design System: Breakbeat",
+  "extensions": {
+    "colorMeta": {
+      "newsprint": { "role": "neutral", "displayName": "Newsprint (Ground)", "canonical": "#efe8e3", "tonalRamp": ["#3d332b", "#c0b2a6", "#d8cbc0", "#ebe0d8", "#efe8e3", "#f3ece7", "#f7f3ef", "#fcfaf9"] },
+      "newsprint-surface": { "role": "neutral", "displayName": "Newsprint Surface", "canonical": "#fcfaf9", "tonalRamp": ["#3d332b", "#c0b2a6", "#d8cbc0", "#ebe0d8", "#efe8e3", "#f3ece7", "#f7f3ef", "#fcfaf9"] },
+      "ink": { "role": "primary", "displayName": "Ink", "canonical": "#292a2a", "tonalRamp": ["#0f1010", "#1d1e1e", "#292a2a", "#3f3e3e", "#5c5959", "#6f6b6b", "#8c8888", "#a8a19c"] },
+      "ink-control": { "role": "primary", "displayName": "Ink Control", "canonical": "#3f3e3e", "tonalRamp": ["#0f1010", "#1d1e1e", "#292a2a", "#3f3e3e", "#5c5959", "#6f6b6b", "#8c8888", "#a8a19c"] },
+      "ink-toned": { "role": "neutral", "displayName": "Ink Toned", "canonical": "#5c5959", "tonalRamp": ["#0f1010", "#1d1e1e", "#292a2a", "#3f3e3e", "#5c5959", "#6f6b6b", "#8c8888", "#a8a19c"] },
+      "accent-blue": { "role": "tertiary", "displayName": "Accent Blue", "canonical": "#46bbff", "tonalRamp": ["#064570", "#0a5990", "#1071b3", "#1a8cd6", "#29a5f0", "#46bbff", "#90d6ff", "#d8effc"] },
+      "accent-green": { "role": "tertiary", "displayName": "Accent Green", "canonical": "#56e69a", "tonalRamp": ["#063520", "#0c5b33", "#127541", "#1a9553", "#25b566", "#56e69a", "#99f0c2", "#ccf7e1"] },
+      "accent-pink": { "role": "tertiary", "displayName": "Accent Pink", "canonical": "#fd9aa4", "tonalRamp": ["#7f1d28", "#a02c38", "#c23d4b", "#e85a68", "#fd7f8a", "#fd9aa4", "#feaab3", "#fee1e4"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The one large page title per screen (a company name, 'Sign in'). FK Grotesk 600." },
+      "headline": { "displayName": "Headline", "purpose": "Section headers and the company name in the profile card." },
+      "title": { "displayName": "Title", "purpose": "Card titles, result-row headlines, dialog titles." },
+      "body": { "displayName": "Body", "purpose": "Prose and summaries, capped at 65-75ch." },
+      "body-sm": { "displayName": "Body Small", "purpose": "The dense-UI default: table cells, input values, list metadata." },
+      "label": { "displayName": "Label", "purpose": "Form labels, button text, chip text, column headers." },
+      "caption": { "displayName": "Caption", "purpose": "Timestamps, source domains, helper text. Ink Toned on the ground." }
+    },
+    "shadows": [
+      { "name": "float", "value": "0 1px 2px rgba(41, 42, 42, 0.04), 0 10px 28px rgba(61, 51, 43, 0.07)", "purpose": "The single card/panel shadow for genuinely floating surfaces (homepage form, popovers). Warm-tinted with the deep newsprint hue." },
+      { "name": "lifted", "value": "0 2px 4px rgba(41, 42, 42, 0.05), 0 16px 40px rgba(61, 51, 43, 0.10)", "purpose": "A hovered or dragged floating element only. Deeper, same warm tint." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Default ease-out (quint-like) for state transitions and SSE row entrances. No bounce." },
+      { "name": "duration-fast", "value": "150ms", "purpose": "Most state transitions (hover, focus, fill changes)." },
+      { "name": "duration-entrance", "value": "200ms", "purpose": "SSE result-row fade/slide entrance. Has a prefers-reduced-motion crossfade alternative." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action: homepage search submit, primary confirmations. Full-width on the search form.",
+      "html": "<button class=\"ds-btn-primary\">Search</button>",
+      "css": ".ds-btn-primary { font-family: 'FK Grotesk', -apple-system, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #fcfaf9; background: #3f3e3e; border: none; border-radius: 8px; padding: 10px 18px; cursor: pointer; transition: background 150ms cubic-bezier(0.22,1,0.36,1), transform 150ms cubic-bezier(0.22,1,0.36,1); } .ds-btn-primary:hover { background: #292a2a; } .ds-btn-primary:active { background: #1d1e1e; transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; } .ds-btn-primary:disabled { background: #f3ece7; color: #8c8888; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Lower-priority actions: reset filters, view all searches.",
+      "html": "<button class=\"ds-btn-secondary\">View all searches</button>",
+      "css": ".ds-btn-secondary { font-family: 'FK Grotesk', -apple-system, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #292a2a; background: #fcfaf9; border: 1px solid #d8cbc0; border-radius: 8px; padding: 10px 18px; cursor: pointer; transition: background 150ms cubic-bezier(0.22,1,0.36,1), border-color 150ms; } .ds-btn-secondary:hover { background: #f3ece7; border-color: #c0b2a6; } .ds-btn-secondary:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The single company name/domain field on the homepage, and all form fields.",
+      "html": "<label class=\"ds-input-label\">Company name or domain</label><input class=\"ds-input\" type=\"text\" placeholder=\"acme.com\" />",
+      "css": ".ds-input-label { display: block; font-family: 'FK Grotesk', -apple-system, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #292a2a; margin-bottom: 6px; } .ds-input { font-family: 'FK Grotesk', -apple-system, system-ui, sans-serif; font-size: 0.875rem; color: #292a2a; background: #ffffff; border: 1px solid #ebe0d8; border-radius: 8px; padding: 9px 12px; width: 100%; box-sizing: border-box; transition: border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: #8c8888; } .ds-input:focus { outline: none; border-color: #46bbff; box-shadow: 0 0 0 3px rgba(70, 187, 255, 0.2); }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Content-type filter buttons. Icon + label; color is never the only signal. Selected variant included.",
+      "html": "<div style=\"display:flex; gap:8px;\"><button class=\"ds-chip\"><svg class=\"ds-chip-ico\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1a8cd6\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2\"/><path d=\"M18 14h-8M15 18h-5M10 6h8v4h-8V6Z\"/></svg>News</button><button class=\"ds-chip ds-chip--selected\"><svg class=\"ds-chip-ico\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M7 7h10M7 12h10M7 17h6\"/></svg>Blog<span class=\"ds-chip-count\">12</span></button></div>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 7px; font-family: 'FK Grotesk', -apple-system, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; color: #5c5959; background: #fcfaf9; border: 1px solid #ebe0d8; border-radius: 999px; padding: 6px 14px; cursor: pointer; transition: background 150ms, border-color 150ms, color 150ms; } .ds-chip:hover { background: #f7f3ef; } .ds-chip:focus-visible { outline: 2px solid #46bbff; outline-offset: 2px; } .ds-chip--selected { background: #292a2a; border-color: #292a2a; color: #fcfaf9; } .ds-chip-count { font-size: 0.8125rem; opacity: 0.7; } .ds-chip-ico { flex-shrink: 0; }"
+    },
+    {
+      "name": "Company Profile Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The static in-flow card at the top of a result page. Uses a border + tonal contrast, not a shadow.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-head\"><div class=\"ds-card-logo\">A</div><div><h2 class=\"ds-card-title\">Acme Corporation</h2><p class=\"ds-card-sub\">acme.com &middot; Enterprise software</p></div></div><p class=\"ds-card-body\">Disambiguated via BrandFetch. 248 results across the last 36 months, filtered to coverage about the company.</p></div>",
+      "css": ".ds-card { background: #fcfaf9; border: 1px solid #ebe0d8; border-radius: 16px; padding: 32px; max-width: 640px; } .ds-card-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; } .ds-card-logo { width: 48px; height: 48px; border-radius: 8px; background: #292a2a; color: #fcfaf9; display: flex; align-items: center; justify-content: center; font-family: 'FK Grotesk', sans-serif; font-weight: 600; font-size: 1.25rem; } .ds-card-title { font-family: 'FK Grotesk', sans-serif; font-size: 1.875rem; font-weight: 600; line-height: 1.15; letter-spacing: -0.01em; color: #292a2a; margin: 0; } .ds-card-sub { font-family: 'FK Grotesk', sans-serif; font-size: 0.875rem; color: #5c5959; margin: 4px 0 0; } .ds-card-body { font-family: 'FK Grotesk', sans-serif; font-size: 1rem; line-height: 1.55; color: #292a2a; margin: 0; max-width: 70ch; }"
+    },
+    {
+      "name": "Result Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature component: the unit of the scored, SSE-streamed list. Flat row (never a card), content-type icon + headline + source + match score with confidence bar.",
+      "html": "<a class=\"ds-result-row\" href=\"#\"><span class=\"ds-result-ico\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1a8cd6\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 14h-8M15 18h-5M10 6h8v4h-8V6Zm8 16H4a2 2 0 0 1-2-2V11c0-1.1.9-2 2-2h2\"/><path d=\"M6 18V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4\"/></svg></span><span class=\"ds-result-main\"><span class=\"ds-result-title\">Acme acquires rival in $2B deal, reshaping the sector</span><span class=\"ds-result-meta\">reuters.com &middot; 3 days ago &middot; News</span></span><span class=\"ds-result-score\"><span class=\"ds-result-score-num\">94</span><span class=\"ds-result-bar\"><span class=\"ds-result-bar-fill\" style=\"width:94%\"></span></span></span></a>",
+      "css": ".ds-result-row { display: flex; align-items: center; gap: 16px; padding: 14px 16px; text-decoration: none; border-bottom: 1px solid #ebe0d8; transition: background 150ms; } .ds-result-row:hover { background: #f7f3ef; } .ds-result-row:focus-visible { outline: 2px solid #46bbff; outline-offset: -2px; } .ds-result-ico { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; background: #f3ece7; display: flex; align-items: center; justify-content: center; } .ds-result-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; } .ds-result-title { font-family: 'FK Grotesk', sans-serif; font-size: 1rem; font-weight: 600; line-height: 1.3; color: #292a2a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-result-meta { font-family: 'FK Grotesk', sans-serif; font-size: 0.8125rem; color: #5c5959; } .ds-result-score { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; } .ds-result-score-num { font-family: 'FK Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500; color: #292a2a; } .ds-result-bar { width: 56px; height: 3px; border-radius: 999px; background: #ebe0d8; overflow: hidden; } .ds-result-bar-fill { display: block; height: 100%; background: #292a2a; border-radius: 999px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clippings Desk",
+    "overview": "Breakbeat is a researcher's warm-papered desk where verified press clippings are laid out and sorted by signal. The metaphor is literal in the brand's own token names, inherited from Drumbeat: the warm paper ground is `newsprint`, the dark text is `screen` (printer's ink). The whole product is an act of filtering coverage about a company down to what matters, then arranging it for fast, trustworthy review. The system is light, warm, and editorial, anchored on Drumbeat's #efe8e3 newsprint ground with near-white #fcfaf9 cards floating under a single soft, warm-tinted shadow. Type is one confident grotesque (FK Grotesk) doing all the work through scale and weight. Color is held in reserve: ink and paper carry 90% of every screen, and the three brand brights appear only as content-type icon fills, semantic states, and the focus ring.",
+    "keyCharacteristics": [
+      "Warm newsprint ground (#efe8e3), near-white floating cards, ink-on-paper contrast.",
+      "One grotesque type family (FK Grotesk); hierarchy through size and weight, never a second face.",
+      "Restrained color: ink + paper dominate; brand brights reserved for icons, states, and focus.",
+      "Trust made visible: source, match score, and classification accompany every result.",
+      "Calm under live load: SSE entrances reassure, never flash or thrash."
+    ],
+    "rules": [
+      { "name": "The Ink-and-Paper Rule", "body": "Ink and newsprint carry at least 90% of every screen. If a brand bright is filling more than icons, states, and the focus ring on a given view, it is overused. Their rarity is what makes them legible as signal.", "section": "colors" },
+      { "name": "The Newsprint Contrast Rule", "body": "Body-size secondary text on the #efe8e3 ground uses Ink Toned #5c5959 (5.7:1), never Ink Muted #6f6b6b (4.35:1, fails AA at body size). #6f6b6b is permitted only on the lighter #fcfaf9 surface, or at >=18px. Placeholders use #8c8888 on white inputs only.", "section": "colors" },
+      { "name": "The Colored-Text Demotion Rule", "body": "A brand hue carrying text drops to its darker step: error copy is #a02c38, not #fd9aa4; a colored link is #1071b3, not #46bbff. The bright 400s are fills and indicators only.", "section": "colors" },
+      { "name": "The One Voice Rule", "body": "FK Grotesk is the only typeface. No serif for editorial warmth, no mono for technical credibility. Warmth comes from the paper; credibility comes from the data.", "section": "typography" },
+      { "name": "The Fixed-Scale Rule", "body": "Sizes are fixed rem, never clamp(). A heading that fluidly shrinks inside a sidebar or dense list looks worse, not designed. The scale is fixed at ~1.2-1.25 between steps.", "section": "typography" },
+      { "name": "The Warm-Shadow Rule", "body": "Shadows are tinted with the newsprint deep hue (#3d332b), never neutral or cool black. A cool gray drop-shadow on warm paper is the tell of an off-brand component.", "section": "elevation" },
+      { "name": "The Tonal-Before-Shadow Rule", "body": "Reach for a tonal step (newsprint-raised, newsprint-sunken) or a border before reaching for a shadow. Shadows are for things that genuinely float above the page.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do anchor every screen on the Newsprint ground #efe8e3 with #fcfaf9 surfaces, the inherited Drumbeat brand, non-negotiable.",
+      "Do use Ink Toned #5c5959 for body-size secondary text on the ground; reserve #6f6b6b for the white surface or >=18px.",
+      "Do demote brand hues to their darker step for any colored text (#a02c38 error copy, #1071b3 links).",
+      "Do pair every content-type color with a distinct icon shape and a text label, so color-blind users are never disadvantaged.",
+      "Do carry all six interaction states on every control, with a visible Accent-Blue focus ring throughout.",
+      "Do announce SSE result arrivals via an ARIA live region, and give every entrance a prefers-reduced-motion alternative.",
+      "Do tint shadows with the deep newsprint hue #3d332b, and prefer tonal layering or a border before a shadow.",
+      "Do keep FK Grotesk as the only typeface; build hierarchy with the fixed rem scale and weight."
+    ],
+    "donts": [
+      "Don't ship the generic AI-SaaS template: no gradient heroes, no purple-blue gradients, no tiny uppercase tracked eyebrows, no identical icon-card grids.",
+      "Don't build a heavy enterprise dashboard: no chart junk, no gray-on-gray density, breathing room is required.",
+      "Don't let clean tip into flat and lifeless: pure white, one gray, no warmth, no point of view is a failure.",
+      "Don't use a cool or neutral-black drop shadow on the warm paper; it reads instantly as off-brand.",
+      "Don't put a brand bright (#46bbff / #56e69a / #fd9aa4) on body text or let it fill more than icons, states, and the focus ring.",
+      "Don't wrap result rows in cards; the list is flat rows separated by hairlines.",
+      "Don't use clamp()/fluid headings, a second font family, or a display face in UI labels, buttons, or data.",
+      "Don't encode meaning in color alone; score, state, and content type each need a non-color signal.",
+      "Don't use border-left/border-right greater than 1px as a colored accent stripe."
+    ]
+  }
+}

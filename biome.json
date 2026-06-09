@@ -1,0 +1,86 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/schema.json",
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [
+							[":NODE:", ":PACKAGE:", ":PACKAGE_WITH_PROTOCOL:", ":URL:"],
+							["~/**", ":ALIAS:", ":PATH:"]
+						],
+						"identifierOrder": "natural"
+					}
+				},
+				"useSortedAttributes": {
+					"level": "on",
+					"options": {
+						"sortOrder": "natural"
+					}
+				},
+				"useSortedKeys": {
+					"level": "on",
+					"options": {
+						"sortOrder": "natural"
+					}
+				}
+			}
+		},
+		"enabled": true
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!package.json",
+			"!.claude",
+			"!public",
+			"!src/client/styles.css",
+			"!docs/claude-code-sessions"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double"
+		},
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"useImportType": "off"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.astro"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedImports": "off",
+						"noUnusedVariables": "off"
+					},
+					"style": {
+						"useConst": "off",
+						"useImportType": "off"
+					}
+				}
+			}
+		}
+	],
+	"vcs": {
+		"clientKind": "git",
+		"enabled": true,
+		"useIgnoreFile": true
+	}
+}

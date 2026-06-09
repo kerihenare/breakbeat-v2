@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: breakbeat
+      POSTGRES_PASSWORD: breakbeat
+      POSTGRES_DB: breakbeat
+    ports: [ "5432:5432" ]
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U breakbeat" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: [ "6379:6379" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  bugsink:
+    image: bugsink/bugsink:latest
+    environment:
+      # Must be >= 50 chars with varied characters (Bugsink runs Django's
+      # --fail-level WARNING deploy check at start). Dev-only; change for any
+      # non-local use.
+      SECRET_KEY: bsink_dev_2c1f9a47e3b86d05f7a219c4e8d63b0a5471fe92ac38d6b0
+      CREATE_SUPERUSER: "admin@example.com:admin"
+      BEHIND_HTTPS: "false"
+    ports: [ "8000:8000" ]
+    volumes: [ "bugsinkdata:/data" ]
+
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3030:3000" # Grafana UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    restart: unless-stopped
+
+volumes:
+  bugsinkdata:
+  pgdata:

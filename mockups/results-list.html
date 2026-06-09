@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Searches · Breakbeat</title>
+<style>
+:root {
+  --newsprint: #efe8e3; --surface: #fcfaf9; --raised: #f7f3ef; --sunken: #f3ece7;
+  --border: #ebe0d8; --border-strong: #d8cbc0;
+  --ink: #292a2a; --ink-strong: #1d1e1e; --ink-control: #3f3e3e;
+  --ink-toned: #5c5959; --ink-muted: #6f6b6b; --ink-dimmed: #8c8888;
+  --blue: #46bbff; --blue-text: #1071b3; --green: #56e69a; --green-text: #127541;
+  --pink: #fd9aa4; --pink-text: #a02c38; --focus: #46bbff;
+  --r-sm: 6px; --r-md: 8px; --r-lg: 16px; --r-pill: 999px;
+  --shadow-float: 0 1px 2px rgba(41,42,42,0.04), 0 10px 28px rgba(61,51,43,0.07);
+  --font: "FK Grotesk", -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--newsprint); color: var(--ink);
+  font-family: var(--font); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+a { color: var(--blue-text); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+
+.site { max-width: 860px; margin: 0 auto; padding: 0 24px 96px; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; border-bottom: 1px solid var(--border); margin-bottom: 40px;
+}
+.wordmark { font-weight: 600; font-size: 1.0625rem; letter-spacing: -0.01em; color: var(--ink-strong); display: inline-flex; align-items: center; gap: 9px; }
+.wordmark .glyph { width: 22px; height: 22px; display: grid; place-items: center; background: var(--ink); color: var(--surface); border-radius: var(--r-sm); font-size: 13px; font-weight: 700; }
+.topnav { display: flex; gap: 22px; font-size: 0.875rem; }
+.topnav a { color: var(--ink-muted); font-weight: 500; }
+.topnav a:hover { color: var(--ink); text-decoration: none; }
+.topnav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.page-head h1 { font-size: 1.875rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.page-head p { margin: 6px 0 0; color: var(--ink-toned); font-size: 0.9375rem; }
+.btn-primary {
+  background: var(--ink-control); color: var(--surface);
+  border: none; border-radius: var(--r-md); padding: 10px 18px;
+  font-family: var(--font); font-size: 0.875rem; font-weight: 500; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  transition: background 130ms ease;
+}
+.btn-primary:hover { background: var(--ink); text-decoration: none; }
+.btn-primary svg { width: 15px; height: 15px; }
+
+/* ============================================================
+   2. SEARCHES LIST TABLE (flat rows + hairlines, not cards)
+   ============================================================ */
+.table { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
+.thead {
+  display: grid; grid-template-columns: 1fr 150px 90px 96px;
+  gap: 16px; align-items: center;
+  padding: 11px 20px; background: var(--sunken);
+  font-size: 0.8125rem; font-weight: 600; color: var(--ink-toned);
+  border-bottom: 1px solid var(--border);
+}
+.thead .num, .row .num { text-align: right; font-variant-numeric: tabular-nums; }
+.srow {
+  display: grid; grid-template-columns: 1fr 150px 90px 96px;
+  gap: 16px; align-items: center;
+  padding: 14px 20px; text-decoration: none; color: inherit;
+  border-bottom: 1px solid var(--border);
+  transition: background 130ms ease;
+}
+.srow:last-child { border-bottom: none; }
+.srow:hover { background: var(--raised); }
+.srow:hover .co__name { text-decoration: underline; text-underline-offset: 2px; }
+.co { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.co__logo {
+  width: 30px; height: 30px; border-radius: 7px; flex: none;
+  background: var(--sunken); border: 1px solid var(--border);
+  display: grid; place-items: center; font-size: 14px; font-weight: 600; color: var(--ink);
+}
+.co__name { font-size: 0.9375rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.co__dom { font-size: 0.8125rem; color: var(--ink-toned); }
+.num { font-size: 0.9375rem; color: var(--ink); }
+.num .none { color: var(--ink-dimmed); }
+.time { font-size: 0.8125rem; color: var(--ink-toned); text-align: right; white-space: nowrap; }
+
+/* status badge */
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 0.8125rem; font-weight: 500; white-space: nowrap; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.status--done { color: var(--green-text); }   .status--done .dot { background: var(--green); }
+.status--warn { color: var(--pink-text); }     .status--warn .dot { background: var(--pink); }
+.status--running { color: var(--ink-toned); }  .status--running .dot { background: var(--blue); animation: pulse 1.6s ease-in-out infinite; }
+.status--failed { color: var(--pink-text); }   .status--failed .dot { background: var(--pink-text); }
+.status--pending { color: var(--ink-toned); }  .status--pending .dot { background: var(--ink-dimmed); }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.78); } }
+
+/* paginator (shared) */
+.paginator { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; flex-wrap: wrap; }
+.paginator__range { font-size: 0.8125rem; color: var(--ink-toned); font-variant-numeric: tabular-nums; }
+.pages { display: flex; align-items: center; gap: 6px; }
+.pbtn {
+  min-width: 36px; height: 36px; padding: 0 11px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-md);
+  font-family: var(--font); font-size: 0.875rem; font-weight: 500; color: var(--ink); cursor: pointer;
+  font-variant-numeric: tabular-nums; transition: background 130ms ease;
+}
+.pbtn:hover { background: var(--sunken); }
+.pbtn[aria-current="page"] { background: var(--ink); color: var(--surface); border-color: var(--ink); cursor: default; }
+.pbtn[disabled] { background: var(--sunken); color: var(--ink-dimmed); cursor: not-allowed; border-color: var(--border); }
+.pbtn svg { width: 14px; height: 14px; }
+.pellipsis { color: var(--ink-dimmed); padding: 0 2px; user-select: none; }
+
+@media (max-width: 680px) {
+  .site { padding: 0 16px 72px; }
+  .thead { grid-template-columns: 1fr 110px; }
+  .thead .col-count, .thead .col-time { display: none; }
+  .srow { grid-template-columns: 1fr auto; gap: 6px 12px; padding: 13px 16px; }
+  .srow .num { display: none; }
+  .srow .time { grid-column: 1; text-align: left; }
+  .status { grid-column: 2; grid-row: 1; }
+  .pages .num-hide { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  .status--running .dot { opacity: 0.7; }
+}
+</style>
+</head>
+<body>
+<div class="site">
+
+  <header class="topbar">
+    <span class="wordmark"><span class="glyph">B</span>Breakbeat</span>
+    <nav class="topnav" aria-label="Primary">
+      <a href="results-list.html" aria-current="page">Searches</a>
+      <a href="index.html">New search</a>
+    </nav>
+  </header>
+
+  <div class="page-head">
+    <div>
+      <h1>Searches</h1>
+      <p>Every company you've researched, most recent first.</p>
+    </div>
+    <button class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      New search
+    </button>
+  </div>
+
+  <!-- ============ 2. SEARCHES LIST TABLE ============ -->
+  <div class="table" role="table" aria-label="Searches">
+    <div class="thead" role="row">
+      <span role="columnheader">Company</span>
+      <span role="columnheader">Status</span>
+      <span role="columnheader" class="num col-count">Results</span>
+      <span role="columnheader" class="num col-time">Run</span>
+    </div>
+
+    <a class="srow" href="result.html" role="row">
+      <span class="co"><span class="co__logo" aria-hidden="true">A</span><span><span class="co__name">Aglow</span> <span class="co__dom">· getaglow.co</span></span></span>
+      <span class="status status--done"><span class="dot"></span>Done</span>
+      <span class="num">11</span>
+      <span class="time" title="9 Jun 2026, 2:14 pm">2h ago</span>
+    </a>
+
+    <a class="srow" href="#" role="row">
+      <span class="co"><span class="co__logo" aria-hidden="true">N</span><span><span class="co__name">Notion</span> <span class="co__dom">· notion.so</span></span></span>
+      <span class="status status--running"><span class="dot"></span>Researching…</span>
+      <span class="num">6 <span class="none">so far</span></span>
+      <span class="time">just now</span>
+    </a>
+
+    <a class="srow" href="#" role="row">
+      <span class="co"><span class="co__logo" aria-hidden="true">S</span><span><span class="co__name">Stripe</span> <span class="co__dom">· stripe.com</span></span></span>
+      <span class="status status--warn" title="Some search queries failed; results may be incomplete"><span class="dot"></span>Done · warnings</span>
+      <span class="num">24</span>
+      <span class="time">Yesterday</span>
+    </a>
+
+    <a class="srow" href="#" role="row">
+      <span class="co"><span class="co__logo" aria-hidden="true">F</span><span><span class="co__name">Figma</span> <span class="co__dom">· figma.com</span></span></span>
+      <span class="status status--done"><span class="dot"></span>Done</span>
+      <span class="num">31</span>
+      <span class="time">2 days ago</span>
+    </a>
+
+    <a class="srow" href="#" role="row">
+      <span class="co"><span class="co__logo" aria-hidden="true">L</span><span><span class="co__name">Linear</span> <span class="co__dom">· linear.app</span></span></span>
+      <span class="status status--done"><span class="dot"></span>Done</span>
+      <span class="num">18</span>
+      <span class="time">3 days ago</span>
+    </a>
+
+    <a class="srow" href="#" role="row">
+      <span class="co"><span class="co__logo" aria-hidden="true">V</span><span><span class="co__name">Vercel</span> <span class="co__dom">· vercel.com</span></span></span>
+      <span class="status status--failed" title="All search queries failed — nothing to show"><span class="dot"></span>Failed</span>
+      <span class="num"><span class="none">—</span></span>
+      <span class="time">4 days ago</span>
+    </a>
+
+    <a class="srow" href="#" role="row">
+      <span class="co"><span class="co__logo" aria-hidden="true">R</span><span><span class="co__name">Raycast</span> <span class="co__dom">· raycast.com</span></span></span>
+      <span class="status status--done"><span class="dot"></span>Done</span>
+      <span class="num">27</span>
+      <span class="time">5 days ago</span>
+    </a>
+
+  </div>
+
+  <!-- ============ 7. PAGINATOR ============ -->
+  <nav class="paginator" aria-label="Searches pages">
+    <span class="paginator__range">1–7 of 23</span>
+    <div class="pages">
+      <button class="pbtn" disabled aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button class="pbtn" aria-current="page">1</button>
+      <button class="pbtn">2</button>
+      <button class="pbtn">3</button>
+      <span class="pellipsis">…</span>
+      <button class="pbtn num-hide">4</button>
+      <button class="pbtn" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+  </nav>
+
+</div>
+</body>
+</html>

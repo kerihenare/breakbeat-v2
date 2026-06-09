@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sydney startup Aglow raises $1.25M · Breakbeat</title>
+<style>
+:root {
+  --newsprint: #efe8e3; --surface: #fcfaf9; --raised: #f7f3ef; --sunken: #f3ece7;
+  --border: #ebe0d8; --border-strong: #d8cbc0;
+  --ink: #292a2a; --ink-strong: #1d1e1e; --ink-control: #3f3e3e;
+  --ink-toned: #5c5959; --ink-muted: #6f6b6b; --ink-dimmed: #8c8888;
+  --blue: #46bbff; --blue-text: #1071b3; --green: #56e69a; --green-text: #127541;
+  --pink: #fd9aa4; --pink-text: #a02c38; --focus: #46bbff;
+  --tint-blue: rgba(70,187,255,0.14);
+  --r-sm: 6px; --r-md: 8px; --r-lg: 16px; --r-pill: 999px;
+  --shadow-float: 0 1px 2px rgba(41,42,42,0.04), 0 10px 28px rgba(61,51,43,0.07);
+  --font: "FK Grotesk", -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--newsprint); color: var(--ink);
+  font-family: var(--font); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+a { color: var(--blue-text); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+
+.site { max-width: 760px; margin: 0 auto; padding: 0 24px 110px; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
+}
+.wordmark { font-weight: 600; font-size: 1.0625rem; letter-spacing: -0.01em; color: var(--ink-strong); display: inline-flex; align-items: center; gap: 9px; }
+.wordmark .glyph { width: 22px; height: 22px; display: grid; place-items: center; background: var(--ink); color: var(--surface); border-radius: var(--r-sm); font-size: 13px; font-weight: 700; }
+.topnav { display: flex; gap: 22px; font-size: 0.875rem; }
+.topnav a { color: var(--ink-muted); font-weight: 500; }
+.topnav a:hover { color: var(--ink); text-decoration: none; }
+
+.back { display: inline-flex; align-items: center; gap: 7px; font-size: 0.875rem; color: var(--ink-toned); font-weight: 500; margin-bottom: 18px; }
+.back:hover { color: var(--ink); text-decoration: none; }
+.back svg { width: 15px; height: 15px; }
+
+/* ============================================================
+   5. PAGE DETAILS CARD
+   ============================================================ */
+.detail {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 32px;
+}
+.detail__type {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 0.8125rem; font-weight: 600; color: var(--blue-text);
+  margin-bottom: 14px;
+}
+.detail__type .tile { width: 24px; height: 24px; border-radius: 6px; background: var(--tint-blue); display: grid; place-items: center; }
+.detail__type .tile svg { width: 14px; height: 14px; }
+.detail__title {
+  font-size: 1.875rem; font-weight: 600; line-height: 1.15;
+  letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance;
+}
+.detail__cta {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--ink-control); color: var(--surface);
+  border-radius: var(--r-md); padding: 11px 18px;
+  font-size: 0.9375rem; font-weight: 500; transition: background 130ms ease;
+}
+.detail__cta:hover { background: var(--ink); text-decoration: none; }
+.detail__cta svg { width: 16px; height: 16px; }
+.detail__cta .host { opacity: 0.7; font-weight: 400; }
+
+.facts {
+  display: flex; flex-wrap: wrap; gap: 10px 28px;
+  margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--border);
+}
+.fact { display: flex; flex-direction: column; gap: 4px; }
+.fact__k { font-size: 0.75rem; font-weight: 600; color: var(--ink-toned); text-transform: none; }
+.fact__v { font-size: 0.9375rem; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+
+/* trust primitives */
+.vmark { display: inline-flex; align-items: center; gap: 5px; font-weight: 500; }
+.vmark svg { width: 14px; height: 14px; }
+.vmark--verified { color: var(--green-text); }
+.vmark--uncertain { color: var(--ink-toned); }
+.vmark--none { color: var(--ink-dimmed); }
+.sentiment {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 10px; border-radius: var(--r-pill);
+  font-size: 0.8125rem; font-weight: 500; border: 1px solid var(--border);
+}
+.sentiment .dot { width: 7px; height: 7px; border-radius: 50%; }
+.sentiment--pos { color: var(--green-text); } .sentiment--pos .dot { background: var(--green); }
+.sentiment--neu { color: var(--ink-toned); }  .sentiment--neu .dot { background: var(--ink-dimmed); }
+.sentiment--neg { color: var(--pink-text); }  .sentiment--neg .dot { background: var(--pink); }
+
+/* mini score */
+.mscore { display: inline-flex; align-items: center; gap: 8px; }
+.mscore__bar { width: 54px; height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.mscore__fill { height: 100%; background: var(--ink); border-radius: 2px; }
+
+/* ============================================================
+   6. PAGE EXTRACTED CONTENT
+   ============================================================ */
+.content { margin-top: 40px; }
+.content__summary {
+  background: var(--raised); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 20px 22px; margin-bottom: 34px;
+}
+.content__summary .lbl {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.8125rem; font-weight: 600; color: var(--ink-toned); margin-bottom: 8px;
+}
+.content__summary .lbl svg { width: 14px; height: 14px; color: var(--green-text); }
+.content__summary p { margin: 0; font-size: 1rem; color: var(--ink); max-width: 68ch; }
+
+.prose { max-width: 68ch; }
+.prose h2 {
+  font-size: 1.25rem; font-weight: 600; margin: 32px 0 10px; line-height: 1.3;
+}
+.prose h2:first-child { margin-top: 0; }
+.prose p { margin: 0 0 18px; font-size: 1.0625rem; line-height: 1.65; color: var(--ink); text-wrap: pretty; }
+.prose .lede { font-size: 1.125rem; color: var(--ink); }
+.extract-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 20px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.extract-head h2 { font-size: 0.8125rem; font-weight: 600; color: var(--ink-toned); margin: 0; }
+.extract-head .via { font-size: 0.75rem; color: var(--ink-dimmed); }
+
+.totop { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--ink-toned); font-weight: 500; margin-top: 12px; }
+.totop:hover { color: var(--ink); text-decoration: none; }
+.totop svg { width: 14px; height: 14px; }
+
+@media (max-width: 680px) {
+  .site { padding: 0 16px 80px; }
+  .detail { padding: 22px; }
+  .detail__title { font-size: 1.5rem; }
+  .prose p { font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { transition-duration: 0.001ms !important; }
+}
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="site" id="top">
+
+  <header class="topbar">
+    <span class="wordmark"><span class="glyph">B</span>Breakbeat</span>
+    <nav class="topnav" aria-label="Primary">
+      <a href="results-list.html">Searches</a>
+      <a href="result.html">Aglow</a>
+    </nav>
+  </header>
+
+  <a class="back" href="result.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+    Back to Aglow results
+  </a>
+
+  <!-- ============ 5. PAGE DETAILS CARD ============ -->
+  <article class="detail">
+    <span class="detail__type">
+      <span class="tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h13v14H6a2 2 0 0 1-2-2V5Z"/><path d="M17 8h3v9a2 2 0 0 1-2 2"/><path d="M7 8h7M7 11h7M7 14h5"/></svg></span>
+      News article
+    </span>
+    <h1 class="detail__title">Sydney startup Aglow raises $1.25M as its beauty-industry membership model gains traction</h1>
+
+    <a class="detail__cta" href="https://www.businessnewsaustralia.com/articles/sydney-startup-aglow-raises--1-25m-as-its-beauty-industry-membership-model-gains-traction.html" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>
+      Read original <span class="host">· businessnewsaustralia.com</span>
+    </a>
+
+    <div class="facts">
+      <div class="fact">
+        <span class="fact__k">Source</span>
+        <span class="fact__v">businessnewsaustralia.com</span>
+      </div>
+      <div class="fact">
+        <span class="fact__k">Published</span>
+        <span class="fact__v">19 August 2024</span>
+      </div>
+      <div class="fact">
+        <span class="fact__k">Match score</span>
+        <span class="fact__v"><span class="mscore"><strong>98</strong><span class="mscore__bar"><span class="mscore__fill" style="width:98%"></span></span></span></span>
+      </div>
+      <div class="fact">
+        <span class="fact__k">Verification</span>
+        <span class="fact__v">
+          <span class="vmark vmark--verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg>Verified</span>
+        </span>
+      </div>
+      <div class="fact">
+        <span class="fact__k">Sentiment</span>
+        <span class="fact__v"><span class="sentiment sentiment--pos"><span class="dot"></span>Positive</span></span>
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ 6. PAGE EXTRACTED CONTENT ============ -->
+  <section class="content" aria-label="Extracted content">
+
+    <div class="content__summary">
+      <div class="lbl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m13.5-6.5-2 2m-7 7-2 2m11 0-2-2m-7-7-2-2"/></svg>
+        Summary
+      </div>
+      <p>Beauty-industry membership startup Aglow has raised <strong>AUD&nbsp;$1.25&nbsp;million</strong> in seed funding, backed by the founders of Tyro and Timely. The Sydney-founded company runs a subscription model that lets clients pay for salon and clinic treatments on recurring plans, and reports growing traction across Australia and New Zealand. Coverage frames the raise as validation of a recurring-revenue model in a category long dominated by one-off bookings.</p>
+    </div>
+
+    <div class="extract-head">
+      <h2>Full article</h2>
+      <span class="via">Extracted via Tavily</span>
+    </div>
+
+    <div class="prose">
+      <p class="lede">Sydney-founded beauty-tech startup Aglow has closed a $1.25 million seed round as its membership model for salons and clinics gains momentum across Australia and New Zealand.</p>
+      <p>The round was backed by a group of operators that includes the founders of payments company Tyro and salon-software business Timely — investors with deep roots in the small-business and beauty-services markets Aglow is targeting.</p>
+      <p>Aglow's platform lets beauty and aesthetics businesses offer recurring memberships to their clients, replacing one-off appointment bookings with subscription plans that smooth revenue and improve retention. The company says memberships give clinics more predictable income while giving clients a simpler way to budget for regular treatments.</p>
+      <h2>A recurring-revenue bet on beauty</h2>
+      <p>The membership model is well established in fitness and wellness, but Aglow is betting it can reshape a beauty-services sector that the company pegs at more than $11 billion in Australia alone. Early adopters span skin clinics, injectable providers and salons looking to lock in repeat custom.</p>
+      <p>The fresh capital will go toward product development and expanding Aglow's footprint with clinics in both Australian and New Zealand markets, the company said.</p>
+    </div>
+
+    <a class="totop" href="#top">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+      Back to top
+    </a>
+  </section>
+
+</div>
+</body>
+</html>
