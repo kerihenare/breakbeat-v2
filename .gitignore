@@ -146,3 +146,6 @@ vite.config.ts.timestamp-*
 .playwright-mcp/
 .remember/
 graphify-out/
+
+# Generated CSS (built by `build:css` / `pnpm boot` from src/client/styles.css)
+public/styles.css
