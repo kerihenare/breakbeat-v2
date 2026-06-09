@@ -124,6 +124,7 @@ These encode ADR 0004 (`docs/adr/0004-otel-instrumentation.md`) — the primary 
 ### Metric label discipline
 
 - **Bounded aggregates only:** `job.duration`, `job.completed`, `stage.duration`, `llm.tokens`, `llm.cost`, `external.request`, `results`, `warnings`, and a `queue.depth` observable gauge.
+- **Instrument types are contract** (they fix the queryable Prometheus/Mimir series): `job.duration` and `stage.duration` are **Histograms** (expose `_bucket`/`_sum`/`_count`, support `histogram_quantile` for p95 latency); `job.completed`, `llm.tokens`, `llm.cost`, `external.request`, `results`, `warnings` are **Counters** (`_total` suffix); `queue.depth` is an **observable gauge** (no suffix). A duration metric you cannot take a percentile on does not answer "why slow," so the duration pair must be histograms.
 - **Closed/small label sets only:** `stage` (`resolve | search | filter | analyze | summarise`), `model`, `exclusion_code`, `terminal_state` (`done | done_with_warnings | failed`), `content_type` (the seven brief categories plus `other`), and `service` (`breakbeat-web | breakbeat-worker`).
 - **Never** put `job.id`, the company anchor, or a URL on a metric label — that is a Mimir cardinality bomb, and per-Job drill-down is the Job Trace's job, not a metric's.
 
