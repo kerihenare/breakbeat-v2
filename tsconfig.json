@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"declaration": false,
+		"emitDecoratorMetadata": true,
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"forceConsistentCasingInFileNames": true,
+		"ignoreDeprecations": "6.0",
+		"lib": ["ES2023"],
+		"module": "commonjs",
+		"moduleResolution": "node10",
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitAny": true,
+		"outDir": "./dist",
+		"removeComments": true,
+		"resolveJsonModule": true,
+		"rootDir": "./src",
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"strictNullChecks": true,
+		"target": "ES2022",
+		"types": ["node"],
+		"useDefineForClassFields": false
+	},
+	"exclude": ["node_modules", "dist", "public"],
+	"include": ["src/**/*.ts"]
+}

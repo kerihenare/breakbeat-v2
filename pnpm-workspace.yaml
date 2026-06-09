@@ -1,0 +1,6 @@
+# Build-script approvals (pnpm 11). These deps ship native binaries / postinstall
+# steps the toolchain genuinely needs; approving them clears ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  "@parcel/watcher": true
+  esbuild: true
+  msgpackr-extract: true

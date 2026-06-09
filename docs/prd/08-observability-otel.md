@@ -2,6 +2,7 @@
 
 **Status:** ready-for-agent
 **Depends on:** Foundation & Job Lifecycle (cross-cuts all other PRDs)
+**ADRs:** 0004 (OTel / process model — the core decision), 0003 (the fused full-text Haiku call → one `analyze` span)
 
 ## Problem Statement
 

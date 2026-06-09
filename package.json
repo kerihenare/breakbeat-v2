@@ -5,11 +5,35 @@
     "private": true,
     "license": "MIT",
     "version": "0.1.0",
-    "main": "dist/main.js",
+    "main": "dist/main.web.js",
     "engines": {
         "node": ">=26"
     },
-    "scripts": {},
+    "scripts": {
+        "boot": "bash scripts/dev.sh",
+        "down": "docker compose down",
+        "build": "nest build",
+        "build:css": "tailwindcss -i ./src/client/styles.css -o ./public/styles.css --minify",
+        "start:web": "node --env-file-if-exists=.env --import ./dist/instrumentation.js dist/main.web.js",
+        "start:worker": "node --env-file-if-exists=.env --import ./dist/instrumentation.js dist/main.worker.js",
+        "dev": "concurrently -n web,worker,css -c blue,magenta,yellow \"pnpm dev:web\" \"pnpm dev:worker\" \"pnpm dev:css\"",
+        "dev:web": "nest start --watch --entryFile main.web",
+        "dev:worker": "nest start --watch --entryFile main.worker",
+        "dev:css": "tailwindcss -i ./src/client/styles.css -o ./public/styles.css --watch",
+        "lint": "biome check .",
+        "lint:fix": "biome check --write .",
+        "format": "biome format --write .",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
+        "fta": "fta src --config-path fta.json",
+        "test": "vitest run",
+        "test:unit": "vitest run",
+        "test:watch": "vitest",
+        "test:integration": "vitest run --config vitest.integration.config.ts",
+        "test:e2e": "playwright test",
+        "verify": "pnpm lint && pnpm typecheck && pnpm fta && pnpm test:unit",
+        "migrate:generate": "drizzle-kit generate",
+        "migrate:push": "drizzle-kit push"
+    },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.102.0",
         "@nestjs/bullmq": "^11.0.4",
@@ -22,7 +46,7 @@
         "@tavily/core": "^0.7.5",
         "bullmq": "^5.78.0",
         "drizzle-orm": "^0.38.0",
-        "ioredis": "^5.4.0",
+        "ioredis": "5.10.1",
         "nestjs-pino": "^4.1.0",
         "nunjucks": "^3.2.4",
         "pino": "^9.5.0",
@@ -31,6 +55,7 @@
         "postgres": "^3.4.5",
         "reflect-metadata": "^0.2.2",
         "rxjs": "^7.8.1",
+        "uuidv7": "^1.0.2",
         "zod": "^3.24.0"
     },
     "devDependencies": {
@@ -38,18 +63,20 @@
         "@nestjs/cli": "^11.0.0",
         "@nestjs/schematics": "^11.0.0",
         "@nestjs/testing": "^11.0.0",
+        "@playwright/test": "^1.49.0",
         "@tailwindcss/cli": "^4.3.0",
         "@types/express": "^5.0.6",
-        "@types/jest": "^29.5.14",
         "@types/node": "^25.9.1",
         "@types/nunjucks": "^3.2.6",
         "concurrently": "^10.0.3",
         "drizzle-kit": "^0.30.0",
         "esbuild": "^0.28.0",
+        "fta-cli": "^2.0.1",
         "htmx.org": "^2.0.10",
         "lit": "^3.3.3",
         "tailwindcss": "^4.3.0",
-        "typescript": "^6.0.3"
+        "typescript": "^6.0.3",
+        "vitest": "^3.2.4"
     },
     "packageManager": "pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485"
 }

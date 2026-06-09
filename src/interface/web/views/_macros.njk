@@ -1,0 +1,42 @@
+{% macro statusBadge(s) %}
+<span class="inline-flex items-center gap-1.5 rounded-full border border-newsprint-border bg-newsprint-surface px-2.5 py-0.5 text-xs font-medium">
+	<span aria-hidden="true" class="h-1.5 w-1.5 rounded-full
+		{%- if s.tone == 'running' %} bg-accent-blue
+		{%- elif s.tone == 'done' %} bg-accent-green
+		{%- elif s.tone == 'warning' %} bg-accent-pink
+		{%- elif s.tone == 'failed' %} bg-accent-pink
+		{%- else %} bg-ink-dimmed{% endif %}"></span>
+	{{ s.label }}
+</span>
+{% endmacro %}
+
+{% macro contentIcon(ct) %}
+<span title="{{ ct.label }}" aria-hidden="true" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold
+	{%- if ct.group == 'blue' %} bg-accent-blue/15 text-accent-blue-text
+	{%- elif ct.group == 'green' %} bg-accent-green/20 text-accent-green-text
+	{%- elif ct.group == 'pink' %} bg-accent-pink/25 text-accent-pink-text
+	{%- else %} bg-newsprint-sunken text-ink-toned{% endif %}">{{ ct.label | truncate(1, true, "") }}</span>
+{% endmacro %}
+
+{% macro matchScore(ms) %}
+<div class="flex items-center gap-2" title="Match Score — how confident we are this is about the target">
+	<span class="w-7 text-right text-sm font-medium tabular-nums {% if ms.isUnverified %}text-ink-dimmed{% endif %}">{{ ms.reading if not ms.isUnverified else "—" }}</span>
+	<span aria-hidden="true" class="block h-[3px] w-16 overflow-hidden rounded-full bg-newsprint-sunken">
+		<span class="block h-full bg-ink" style="width: {{ ms.barWidth }}%"></span>
+	</span>
+</div>
+{% endmacro %}
+
+{% macro paginator(p, basePath) %}
+{% if p.totalPages > 1 %}
+<nav class="mt-4 flex items-center justify-between text-sm" aria-label="Pagination">
+	<span class="text-ink-toned">{{ p.from }}–{{ p.to }} of {{ p.total }}</span>
+	<span class="flex gap-2">
+		{% if p.hasPrev %}<a href="{{ basePath }}?page={{ p.page - 1 }}" class="rounded-lg border border-newsprint-border-strong px-3 py-1 hover:bg-newsprint-sunken">Previous</a>
+		{% else %}<span class="rounded-lg border border-newsprint-border px-3 py-1 text-ink-dimmed">Previous</span>{% endif %}
+		{% if p.hasNext %}<a href="{{ basePath }}?page={{ p.page + 1 }}" class="rounded-lg border border-newsprint-border-strong px-3 py-1 hover:bg-newsprint-sunken">Next</a>
+		{% else %}<span class="rounded-lg border border-newsprint-border px-3 py-1 text-ink-dimmed">Next</span>{% endif %}
+	</span>
+</nav>
+{% endif %}
+{% endmacro %}

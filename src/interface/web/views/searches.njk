@@ -1,0 +1,39 @@
+{% extends "layout.njk" %}
+{% import "_macros.njk" as m %}
+{% block title %}Searches — Breakbeat{% endblock %}
+{% block content %}
+<div class="flex items-baseline justify-between">
+	<h1 class="text-3xl font-semibold tracking-tight">Searches</h1>
+	<a href="/" class="text-sm text-ink-muted underline underline-offset-2 hover:text-ink">New search</a>
+</div>
+
+{% if jobs.length == 0 %}
+<p class="mt-8 text-sm text-ink-toned">No searches yet. <a href="/" class="underline underline-offset-2">Start one</a>.</p>
+{% else %}
+<div class="mt-6 overflow-hidden rounded-card border border-newsprint-border bg-newsprint-surface">
+	<table class="w-full text-left text-sm">
+		<thead class="border-b border-newsprint-border text-ink-toned">
+			<tr>
+				<th scope="col" class="px-5 py-3 font-medium">Company</th>
+				<th scope="col" class="px-5 py-3 font-medium">Status</th>
+				<th scope="col" class="px-5 py-3 font-medium">Included</th>
+				<th scope="col" class="px-5 py-3 font-medium">Run</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for j in jobs %}
+			<tr class="border-b border-newsprint-border last:border-0 hover:bg-newsprint-raised">
+				<td class="px-5 py-3">
+					<a href="/jobs/{{ j.id }}" class="font-medium hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue">{{ j.company }}</a>
+				</td>
+				<td class="px-5 py-3">{{ m.statusBadge(j.status) }}</td>
+				<td class="px-5 py-3 tabular-nums">{{ j.includedCount }}</td>
+				<td class="px-5 py-3 text-ink-toned">{{ j.createdAt }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{{ m.paginator(pagination, basePath) }}
+{% endif %}
+{% endblock %}

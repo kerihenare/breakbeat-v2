@@ -44,7 +44,7 @@ fails the Job only when *all* queries against *all* attempted sources fail.
 | Adapters | `@tavily/core` behind `TavilySearchPort`; the Anthropic SDK `web_search` tool behind `WebSearchBackstopPort`; the Drizzle `results` writer behind `ResultRepository` |
 | Unit tests | **Vitest** with fakes for all three ports (pure builder, gate, score; orchestration: every escalation/failure path) |
 | Adapter tests | **Vitest** contract tests with the Tavily client and the Anthropic SDK stubbed (request shape, normalization, failure → benign `{ hits: [], failed: true }`) |
-| Repository test | **Vitest** integration against real Postgres via **Testcontainers** (born-`included`, insert-time dedup, provisional ordering) |
+| Repository test | **Vitest** integration (`*.integration.test.ts`) against the shared dev-compose Postgres per **ADR 0008** (born-`included`, insert-time dedup, provisional ordering) |
 | OTel spans | **Out of scope here** — PRD 8 owns span emission. Search only upholds the *facts* a span will read (counts, escalation flag, per-call outcomes) and the **anti-echo** discipline |
 
 ---
@@ -439,7 +439,7 @@ inserted, and the stage outcome, never on which private method ran.
   (`relevance: null`, `publishedDate: null`) and emits GenAI call metadata; an SDK error →
   `{ hits: [], failed: true }`.
 
-**Vitest integration — Testcontainers (real Postgres):**
+**Vitest integration (`*.integration.test.ts`) — shared dev-compose Postgres (ADR 0008):**
 - `insertIncluded` writes born-`included` rows carrying the provisional Match Score; ordering by
   `match_score` descending puts Tavily rows above backstop-floor rows; no `verification_status` set.
 - Inserting the same `(job_id, normalized_url)` twice (across queries and across the two sources)

@@ -39,7 +39,7 @@ the Job is about.
 | Anchor → domain | (1) anchor domain; (2) brand-id → Brand port → primary domain; (3) neither → genuine name-only degraded path |
 | Unit tests | **Vitest** with fakes for all four ports (pure assembly, derivation, de-self, every degraded path) |
 | Adapter tests | **Vitest** contract tests with `fetch` stubbed (`vi.stubGlobal`): request shape, Zod parse, timeout/error/empty → degraded signal |
-| Repository test | **Vitest** integration against real Postgres via **Testcontainers** (round-trip of the full nested identity) |
+| Repository test | **Vitest** integration (`*.integration.test.ts`) against the shared dev-compose Postgres per **ADR 0008** (round-trip of the full nested identity) |
 | OTel spans | **Out of scope here** — PRD 8 owns span emission. Resolve only upholds the *facts* a span will read (counts, statuses) and the **anti-echo** discipline (no scraped text / raw payloads leave the adapter as anything but validated structured output) |
 
 ---
@@ -486,7 +486,7 @@ list, and persisted facts, never on which private method ran.
 - `scrapeHandles`: pure unit over HTML fixtures — finds known platforms, ignores unknown links,
   dedups.
 
-**Vitest integration — Testcontainers (real Postgres):**
+**Vitest integration (`*.integration.test.ts`) — shared dev-compose Postgres (ADR 0008):**
 - `ResolvedIdentityRepository` round-trips a full nested identity (own domains with provenance,
   handles, collisions with and without context, brand context JSON, negative boost string).
 - A re-run (new Job id) writes its own rows; the prior Job's identity rows are unchanged.

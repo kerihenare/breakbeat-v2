@@ -1,0 +1,89 @@
+{% extends "layout.njk" %}
+{% import "_macros.njk" as m %}
+{% block title %}{{ company }} — Breakbeat{% endblock %}
+{% block content %}
+<div class="flex items-start justify-between gap-4">
+	<div>
+		<h1 class="text-3xl font-semibold tracking-tight">{{ company }}</h1>
+		<div class="mt-2">{{ m.statusBadge(status) }}</div>
+	</div>
+	<a href="/searches" class="shrink-0 text-sm text-ink-muted underline underline-offset-2 hover:text-ink">All searches</a>
+</div>
+
+<section class="mt-6 rounded-card border border-newsprint-border bg-newsprint-surface p-6">
+	<h2 class="text-sm font-medium text-ink-toned">Company profile</h2>
+	<p class="mt-2 text-sm text-ink-toned">
+		Identity resolution runs in the Resolve stage. Anchored on <span class="font-medium text-ink">{{ company }}</span>.
+	</p>
+	{% if warnings.length %}
+	<ul class="mt-4 space-y-1">
+		{% for w in warnings %}<li class="text-xs text-ink-toned">⚠ {{ w.message }}</li>{% endfor %}
+	</ul>
+	{% endif %}
+</section>
+
+<section class="mt-4 rounded-card border border-newsprint-border bg-newsprint-surface p-6">
+	<h2 class="text-sm font-medium text-ink-toned">Summary</h2>
+	<p class="mt-2 text-sm {% if not summary %}text-ink-dimmed{% endif %}">{{ summary or "No summary yet." }}</p>
+</section>
+
+{% if isFailed %}
+<section role="alert" class="mt-6 rounded-card border border-accent-pink bg-newsprint-surface p-6">
+	<h2 class="font-medium text-accent-pink-text">This run failed</h2>
+	<p class="mt-1 text-sm text-ink-toned">{{ failureReason or "The run produced nothing to show." }}</p>
+</section>
+{% elif isEmptyFinding %}
+<section class="mt-6 rounded-card border border-newsprint-border bg-newsprint-surface p-6">
+	<h2 class="font-medium">No third-party coverage found</h2>
+	<p class="mt-1 text-sm text-ink-toned">We looked and found no in-scope coverage in the last 36 months.</p>
+</section>
+{% else %}
+	{% if chips.length %}
+	<div class="mt-6 flex flex-wrap gap-2">
+		{% for c in chips %}
+		<span class="inline-flex items-center gap-1.5 rounded-full border border-newsprint-border bg-newsprint-surface py-1 pl-1.5 pr-3 text-sm">
+			{{ m.contentIcon(c) }} {{ c.label }} <span class="text-ink-dimmed tabular-nums">{{ c.count }}</span>
+		</span>
+		{% endfor %}
+	</div>
+	{% endif %}
+
+	<ul aria-live="polite" class="mt-4 overflow-hidden rounded-card border border-newsprint-border bg-newsprint-surface">
+		{% for r in rows %}
+		<li class="flex items-center gap-4 border-b border-newsprint-border px-5 py-3 last:border-0 hover:bg-newsprint-raised">
+			{{ m.contentIcon(r.contentType) }}
+			<div class="min-w-0 flex-1">
+				<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer" class="block truncate font-medium hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue">{{ r.title }}</a>
+				<div class="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-ink-toned">
+					<span>{{ r.contentType.label }}</span><span aria-hidden="true">·</span>
+					<span>{{ r.source }}</span><span aria-hidden="true">·</span>
+					<span>{{ r.date }}</span>
+					{% if r.verification != 'Verified' %}<span aria-hidden="true">·</span><span>{{ r.verification }}</span>{% endif %}
+					{% if r.sentiment %}<span aria-hidden="true">·</span><span>{{ r.sentiment.label }}</span>{% endif %}
+				</div>
+			</div>
+			{{ m.matchScore(r.matchScore) }}
+		</li>
+		{% else %}
+		<li class="px-5 py-6 text-sm text-ink-toned">
+			{% if isTerminal %}No included results.{% else %}Researching… results will appear here.{% endif %}
+		</li>
+		{% endfor %}
+	</ul>
+	{{ m.paginator(pagination, basePath) }}
+
+	{% if excluded.length %}
+	<details class="mt-4">
+		<summary class="cursor-pointer text-sm text-ink-muted hover:text-ink">Excluded results ({{ excluded.length }})</summary>
+		<ul class="mt-2 overflow-hidden rounded-card border border-newsprint-border bg-newsprint-surface">
+			{% for r in excluded %}
+			<li class="flex items-center justify-between gap-4 border-b border-newsprint-border px-5 py-3 last:border-0">
+				<span class="min-w-0 flex-1 truncate text-sm text-ink-toned">{{ r.title }}</span>
+				<span class="shrink-0 rounded-full bg-newsprint-sunken px-2 py-0.5 text-xs text-ink-toned">{{ r.exclusionReason }}</span>
+			</li>
+			{% endfor %}
+		</ul>
+	</details>
+	{% endif %}
+{% endif %}
+{% endblock %}

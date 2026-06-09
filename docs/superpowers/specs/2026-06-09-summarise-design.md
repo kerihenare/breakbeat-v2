@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-09
 **PRD:** `docs/prd/06-summarise.md`
-**ADRs:** 0002 (Search source model — Research API deferred, names this stage as its re-entry point), 0004 (OTel / process model)
+**ADRs:** 0002 (Search source model — Research API deferred, names this stage as its re-entry point), 0004 (OTel / process model), 0008 (integration tests reuse the dev-compose Postgres)
 **Depends on:** Foundation & Job Lifecycle (`docs/superpowers/specs/2026-06-09-foundation-job-lifecycle-design.md`), Verify / Extract / Classify / Enhance (`docs/superpowers/specs/2026-06-09-verify-extract-classify-enhance-design.md`)
 **Status:** ready for implementation plan
 

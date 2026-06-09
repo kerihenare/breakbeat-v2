@@ -30,11 +30,18 @@
 		"enabled": true
 	},
 	"files": {
-		"ignoreUnknown": false,
+		"ignoreUnknown": true,
 		"includes": [
 			"**",
 			"!package.json",
 			"!.claude",
+			"!.agents",
+			"!.cursor",
+			"!.codex",
+			"!.impeccable",
+			"!mockups",
+			"!docs",
+			"!drizzle",
 			"!public",
 			"!src/client/styles.css",
 			"!docs/claude-code-sessions"

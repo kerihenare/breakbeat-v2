@@ -7,7 +7,7 @@
 **Status:** ready for implementation plan
 
 > This is the *technical* design beneath PRD 4. The product design (problem, solution, user
-> stories, domain vocabulary) is settled by the PRD, `CONTEXT.md`, and ADRs 0005/0007 and is not
+> stories, domain vocabulary) is settled by the PRD, `CONTEXT.md`, and ADRs 0004/0005 and is not
 > re-litigated here. This document fixes the domain pure functions (the heuristic predicates, the
 > priority gate, title normalization, the distinctiveness gate, the Collapse clustering), the
 > `ResultRepository` extension Filter needs, the stage orchestration, and the test strategy. It
@@ -62,7 +62,7 @@ own-channel rejection deferred to the Classify backstop in PRD 5.
 | Maintained host knowledge | The aggregator host set, the ecommerce/review host set, and the platform account-URL matchers live in **one clearly-labelled `host-knowledge.ts`**, extensible without touching the predicates or the clustering |
 | Schema | **No migration.** Foundation reserved `status` / `exclusion_code` / `exclusion_detail`; Search added `url` / `title` / `snippet` / `published_date`. Filter writes only into columns that already exist |
 | Unit tests | **Vitest, TDD throughout** — one labelled fixture per heuristic (positive + negative), priority order, degraded path, title normalization, distinctiveness gate, 14-day window, earliest-wins, undated handling, already-excluded-out-of-pool, idempotency, and the Aglow precision fixture |
-| Repository test | **Vitest** integration against real Postgres via **Testcontainers** (`findIncluded` returns only `included`; `recordExclusion` flips `included → excluded` and is idempotent; Match Score untouched) |
+| Repository test | **Vitest** integration (`*.integration.test.ts`) against the shared dev-compose Postgres per **ADR 0008** (`findIncluded` returns only `included`; `recordExclusion` flips `included → excluded` and is idempotent; Match Score untouched) |
 | OTel spans | **Out of scope here** — PRD 8 owns span emission. Filter only upholds the *facts* a span will read (results in/out, per-code counts, each Exclusion as a candidate span event) and the **anti-echo** discipline |
 
 ---
@@ -466,7 +466,7 @@ with which `code`/`detail` — never internal call shapes.
   `Error`; **idempotency** — running the stage twice produces the same Exclusions and never rewrites a
   code; **Match Score untouched** — no write path touches `match_score`.
 
-**Vitest integration — Testcontainers (real Postgres):** `findIncluded` returns only `included`
+**Vitest integration (`*.integration.test.ts`) — shared dev-compose Postgres (ADR 0008):** `findIncluded` returns only `included`
 rows with the content columns; `recordExclusion` flips `included → excluded` with the code/detail and
 is a no-op on an already-`excluded` row (idempotency at the SQL guard); `match_score` and ordering are
 unchanged by an Exclusion; a re-run (new Job id) is unaffected by another Job's Exclusions.

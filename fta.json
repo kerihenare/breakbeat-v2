@@ -1,0 +1,17 @@
+{
+	"exclude_directories": [
+		"**/node_modules",
+		"**/dist",
+		"**/public",
+		"**/.git",
+		"**/testing"
+	],
+	"exclude_filenames": [
+		"**/*.test.ts",
+		"**/*.integration.test.ts",
+		"**/*.e2e.ts",
+		"**/*.spec.ts"
+	],
+	"output_limit": 5000,
+	"score_cap": 1000
+}

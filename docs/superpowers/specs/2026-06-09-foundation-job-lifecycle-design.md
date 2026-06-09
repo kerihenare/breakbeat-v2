@@ -24,18 +24,25 @@ boundary. No research stages exist yet — this is the tracer bullet that PRDs 2
 
 | Decision | Choice |
 |---|---|
-| Unit test framework | **Vitest** (pure domain + port-faked application) |
-| Integration test framework | **Vitest** against **real Postgres/Redis** via **Testcontainers** |
-| End-to-end test | **Playwright** — the tracer bullet only (browser-driven form POST → observe terminal) |
-| Backing-service provisioning in tests | **Testcontainers** (ephemeral, hermetic, parallel-safe) |
+| Unit test framework | **Vitest** (`*.test.ts`, pure domain + port-faked application, no I/O) |
+| Integration test framework | **Vitest** (`*.integration.test.ts`) against the **dev compose Postgres/Redis** (ADR 0008 — not Testcontainers) |
+| End-to-end test | **Playwright** (`*.e2e.ts`) — the tracer-bullet spine only (browser-driven form POST → observe terminal) |
+| Backing-service provisioning in tests | **The `docker-compose.yml` stack** the project already ships for dev (ADR 0008); a dedicated test database/schema, isolated per-test by truncation/rollback |
 | Job identity | **App-minted UUIDv7** (domain owns identity; time-sortable; index-friendly) |
 | Process / source layout | **Single package, two NestJS entrypoints**, shared hexagonal `src/` |
 | Redis status-nudge publisher | **In scope** (port + thin adapter; publish side only, no subscriber) |
 | Tracer-bullet observable surface | **`GET /jobs/:id`** (DB assertions stay in layer-specific integration tests) |
 
+> **Reconciliation (2026-06-10):** an earlier draft of this spec chose Testcontainers for the
+> integration tier. **ADR 0008** is the system-wide, later decision and supersedes it:
+> integration tests reuse the dev compose Postgres/Redis, split by filename suffix
+> (`*.test.ts` / `*.integration.test.ts` / `*.e2e.ts`), with `pnpm verify` scoped to the
+> hermetic chain (Biome → tsc → FTA → `test:unit`). The other seven plans follow ADR 0008;
+> this spec now matches.
+
 These supersede the stale `@types/jest` in `package.json`: the plan adds `vitest`,
-`@playwright/test`, `@testcontainers/postgresql`, `@testcontainers/redis`, a UUIDv7 source,
-and removes `@types/jest`.
+`@playwright/test`, a UUIDv7 source, and removes `@types/jest`. (No Testcontainers
+packages — ADR 0008.)
 
 ---
 
@@ -69,7 +76,7 @@ src/
     ports/
       job-repository.port.ts     # save / findById
       job-queue.port.ts          # enqueue (producer)
-      job-event-publisher.port.ts# publish id-only status nudge
+      job-event-publisher.port.ts# publish id-only nudge: { jobId, kind: "status" | "result", id? }
       clock.port.ts              # now() — injected for deterministic tests
       id-generator.port.ts       # uuidv7()
     pipeline/
@@ -278,8 +285,12 @@ in the schema and exercised by integration tests, but no domain object populates
   - nullable stage columns: `match_score`, `verification_status`, `content_type`, `sentiment`,
     `takeaway` (NULL = "hasn't reached that stage", never a sentinel);
   - **unique index on `(job_id, normalized_url)`** — Search's insert-time URL dedup.
-- **`resolved_identity`** — one row per job, reserved for PRD 2 (company name, own domains,
-  handles, brand context, name collisions / negative boost). Created empty/unused now.
+- **`resolved_identity`** — reserved for PRD 2. Foundation creates **only a minimal parent
+  placeholder keyed by `job_id`** (one row per job); the Resolve stage's own migration owns the
+  substantive columns and child tables (own domains, handles, brand context, name collisions /
+  negative boost). Foundation does **not** flesh out a `resolved_identity` shape that Resolve's
+  migration would then have to `ALTER` — each stage's migration adds its own columns/children.
+  Created empty/unused now. *(Ownership convention clarified 2026-06-10 to avoid a Foundation↔Resolve migration conflict.)*
 
 Exact column types, indexes, and migrations are adapter detail. The load-bearing invariants —
 frozen anchor, born-`included` Result, closed exclusion-code set, warning-presence-drives-
@@ -311,6 +322,12 @@ per-Job channel, published **after** each committed state write. Fire-and-forget
 whether or not anyone is subscribed, carries no Result content or model text (anti-echo), and
 does **not** participate in the Job Trace. No subscriber is built in PRD 1 (PRD 7 adds the web
 SSE subscriber).
+
+> **Interface shape fixed now (2026-06-10):** the port type is the *full* discriminated nudge
+> `{ jobId: string; kind: "status" | "result"; id?: string }` (ADR 0006 / PRD 7), even though
+> Foundation only ever publishes `{ kind: "status" }`. Defining the widened shape now means PRD 7
+> adds the per-Result `{ kind: "result", id }` publish seam (inside the Result repository) and the
+> web subscriber **without editing a Foundation interface** — a cross-plan edit avoided for free.
 
 ### `Clock` / `IdGenerator`
 
@@ -390,13 +407,15 @@ facts**, never on which private method ran.
   enqueues exactly one unit; `runJob` loads, starts, drives runner, persists derived terminal
   state, publishes status nudges.
 
-**Vitest integration — Testcontainers (real Postgres):**
+**Vitest integration (`*.integration.test.ts`) — dev compose Postgres (ADR 0008):**
 - Round-trip a Job (anchor shape + provenance, state, warnings, failure reason).
 - Born-`included` default on Results; `included → excluded`-only constraint rejects illegal
   status; `(job_id, normalized_url)` unique constraint rejects a duplicate insert.
 - Re-run produces a new Job id with its own rows; the prior Job's rows are unchanged.
+- Isolate via a dedicated test database/schema, cleaned per-test (truncation or transactional
+  rollback) — tests share the compose Postgres, not a fresh container each.
 
-**Vitest integration — Testcontainers (real Redis):**
+**Vitest integration (`*.integration.test.ts`) — dev compose Redis (ADR 0008):**
 - Enqueue one unit → worker claims → transitions → reaches terminal.
 - Thrown stage → `failed`, never stuck `running`.
 - Worker restart does not double-run a claimed Job.

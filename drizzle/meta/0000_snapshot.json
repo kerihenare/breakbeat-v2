@@ -1,0 +1,474 @@
+{
+	"_meta": {
+		"columns": {},
+		"schemas": {},
+		"tables": {}
+	},
+	"dialect": "postgresql",
+	"enums": {
+		"public.anchor_kind": {
+			"name": "anchor_kind",
+			"schema": "public",
+			"values": ["disambiguated", "name_only"]
+		},
+		"public.anchor_provenance": {
+			"name": "anchor_provenance",
+			"schema": "public",
+			"values": ["picked", "url_provided", "name_only"]
+		},
+		"public.content_type": {
+			"name": "content_type",
+			"schema": "public",
+			"values": [
+				"news_article",
+				"trade_publication",
+				"blog_post",
+				"press_release",
+				"major_social_post",
+				"newsletter",
+				"podcast",
+				"other"
+			]
+		},
+		"public.exclusion_code": {
+			"name": "exclusion_code",
+			"schema": "public",
+			"values": [
+				"own_channel",
+				"aggregator",
+				"ecommerce_review",
+				"out_of_window",
+				"duplicate",
+				"off_topic"
+			]
+		},
+		"public.job_state": {
+			"name": "job_state",
+			"schema": "public",
+			"values": ["pending", "running", "done", "done_with_warnings", "failed"]
+		},
+		"public.result_status": {
+			"name": "result_status",
+			"schema": "public",
+			"values": ["included", "excluded"]
+		},
+		"public.sentiment": {
+			"name": "sentiment",
+			"schema": "public",
+			"values": ["positive", "neutral", "negative"]
+		},
+		"public.verification_status": {
+			"name": "verification_status",
+			"schema": "public",
+			"values": ["verified", "uncertain"]
+		}
+	},
+	"id": "56e3cf59-7280-4065-a36c-2a486468baee",
+	"policies": {},
+	"prevId": "00000000-0000-0000-0000-000000000000",
+	"roles": {},
+	"schemas": {},
+	"sequences": {},
+	"tables": {
+		"public.jobs": {
+			"checkConstraints": {},
+			"columns": {
+				"anchor_brand_id": {
+					"name": "anchor_brand_id",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"anchor_domain": {
+					"name": "anchor_domain",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"anchor_kind": {
+					"name": "anchor_kind",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "anchor_kind",
+					"typeSchema": "public"
+				},
+				"anchor_name": {
+					"name": "anchor_name",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"anchor_provenance": {
+					"name": "anchor_provenance",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "anchor_provenance",
+					"typeSchema": "public"
+				},
+				"created_at": {
+					"default": "now()",
+					"name": "created_at",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "timestamp with time zone"
+				},
+				"failure_reason": {
+					"name": "failure_reason",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"id": {
+					"name": "id",
+					"notNull": true,
+					"primaryKey": true,
+					"type": "uuid"
+				},
+				"started_at": {
+					"name": "started_at",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "timestamp with time zone"
+				},
+				"state": {
+					"default": "'pending'",
+					"name": "state",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "job_state",
+					"typeSchema": "public"
+				},
+				"terminal_at": {
+					"name": "terminal_at",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "timestamp with time zone"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"foreignKeys": {},
+			"indexes": {
+				"jobs_created_at_idx": {
+					"columns": [
+						{
+							"asc": true,
+							"expression": "created_at",
+							"isExpression": false,
+							"nulls": "last"
+						}
+					],
+					"concurrently": false,
+					"isUnique": false,
+					"method": "btree",
+					"name": "jobs_created_at_idx",
+					"with": {}
+				}
+			},
+			"isRLSEnabled": false,
+			"name": "jobs",
+			"policies": {},
+			"schema": "",
+			"uniqueConstraints": {}
+		},
+		"public.resolved_identity": {
+			"checkConstraints": {},
+			"columns": {
+				"created_at": {
+					"default": "now()",
+					"name": "created_at",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "timestamp with time zone"
+				},
+				"job_id": {
+					"name": "job_id",
+					"notNull": true,
+					"primaryKey": true,
+					"type": "uuid"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"foreignKeys": {
+				"resolved_identity_job_id_jobs_id_fk": {
+					"columnsFrom": ["job_id"],
+					"columnsTo": ["id"],
+					"name": "resolved_identity_job_id_jobs_id_fk",
+					"onDelete": "cascade",
+					"onUpdate": "no action",
+					"tableFrom": "resolved_identity",
+					"tableTo": "jobs"
+				}
+			},
+			"indexes": {},
+			"isRLSEnabled": false,
+			"name": "resolved_identity",
+			"policies": {},
+			"schema": "",
+			"uniqueConstraints": {}
+		},
+		"public.results": {
+			"checkConstraints": {
+				"results_exclusion_code_consistency": {
+					"name": "results_exclusion_code_consistency",
+					"value": "(\"results\".\"status\" = 'excluded' AND \"results\".\"exclusion_code\" IS NOT NULL) OR (\"results\".\"status\" = 'included' AND \"results\".\"exclusion_code\" IS NULL)"
+				},
+				"results_match_score_range": {
+					"name": "results_match_score_range",
+					"value": "\"results\".\"match_score\" IS NULL OR (\"results\".\"match_score\" >= 0 AND \"results\".\"match_score\" <= 100)"
+				}
+			},
+			"columns": {
+				"content_type": {
+					"name": "content_type",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "content_type",
+					"typeSchema": "public"
+				},
+				"created_at": {
+					"default": "now()",
+					"name": "created_at",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "timestamp with time zone"
+				},
+				"exclusion_code": {
+					"name": "exclusion_code",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "exclusion_code",
+					"typeSchema": "public"
+				},
+				"exclusion_detail": {
+					"name": "exclusion_detail",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"extracted_content": {
+					"name": "extracted_content",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"id": {
+					"default": "gen_random_uuid()",
+					"name": "id",
+					"notNull": true,
+					"primaryKey": true,
+					"type": "uuid"
+				},
+				"job_id": {
+					"name": "job_id",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "uuid"
+				},
+				"match_score": {
+					"name": "match_score",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "integer"
+				},
+				"normalized_url": {
+					"name": "normalized_url",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"published_date": {
+					"name": "published_date",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "timestamp with time zone"
+				},
+				"sentiment": {
+					"name": "sentiment",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "sentiment",
+					"typeSchema": "public"
+				},
+				"snippet": {
+					"name": "snippet",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"source_domain": {
+					"name": "source_domain",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"status": {
+					"default": "'included'",
+					"name": "status",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "result_status",
+					"typeSchema": "public"
+				},
+				"takeaway": {
+					"name": "takeaway",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"title": {
+					"name": "title",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"url": {
+					"name": "url",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"verification_status": {
+					"name": "verification_status",
+					"notNull": false,
+					"primaryKey": false,
+					"type": "verification_status",
+					"typeSchema": "public"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"foreignKeys": {
+				"results_job_id_jobs_id_fk": {
+					"columnsFrom": ["job_id"],
+					"columnsTo": ["id"],
+					"name": "results_job_id_jobs_id_fk",
+					"onDelete": "cascade",
+					"onUpdate": "no action",
+					"tableFrom": "results",
+					"tableTo": "jobs"
+				}
+			},
+			"indexes": {
+				"results_job_match_score_idx": {
+					"columns": [
+						{
+							"asc": true,
+							"expression": "job_id",
+							"isExpression": false,
+							"nulls": "last"
+						},
+						{
+							"asc": true,
+							"expression": "match_score",
+							"isExpression": false,
+							"nulls": "last"
+						}
+					],
+					"concurrently": false,
+					"isUnique": false,
+					"method": "btree",
+					"name": "results_job_match_score_idx",
+					"with": {}
+				},
+				"results_job_normalized_url_uq": {
+					"columns": [
+						{
+							"asc": true,
+							"expression": "job_id",
+							"isExpression": false,
+							"nulls": "last"
+						},
+						{
+							"asc": true,
+							"expression": "normalized_url",
+							"isExpression": false,
+							"nulls": "last"
+						}
+					],
+					"concurrently": false,
+					"isUnique": true,
+					"method": "btree",
+					"name": "results_job_normalized_url_uq",
+					"with": {}
+				}
+			},
+			"isRLSEnabled": false,
+			"name": "results",
+			"policies": {},
+			"schema": "",
+			"uniqueConstraints": {}
+		},
+		"public.warnings": {
+			"checkConstraints": {},
+			"columns": {
+				"created_at": {
+					"default": "now()",
+					"name": "created_at",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "timestamp with time zone"
+				},
+				"id": {
+					"default": "gen_random_uuid()",
+					"name": "id",
+					"notNull": true,
+					"primaryKey": true,
+					"type": "uuid"
+				},
+				"job_id": {
+					"name": "job_id",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "uuid"
+				},
+				"message": {
+					"name": "message",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "text"
+				},
+				"type": {
+					"name": "type",
+					"notNull": true,
+					"primaryKey": false,
+					"type": "text"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"foreignKeys": {
+				"warnings_job_id_jobs_id_fk": {
+					"columnsFrom": ["job_id"],
+					"columnsTo": ["id"],
+					"name": "warnings_job_id_jobs_id_fk",
+					"onDelete": "cascade",
+					"onUpdate": "no action",
+					"tableFrom": "warnings",
+					"tableTo": "jobs"
+				}
+			},
+			"indexes": {
+				"warnings_job_id_idx": {
+					"columns": [
+						{
+							"asc": true,
+							"expression": "job_id",
+							"isExpression": false,
+							"nulls": "last"
+						}
+					],
+					"concurrently": false,
+					"isUnique": false,
+					"method": "btree",
+					"name": "warnings_job_id_idx",
+					"with": {}
+				}
+			},
+			"isRLSEnabled": false,
+			"name": "warnings",
+			"policies": {},
+			"schema": "",
+			"uniqueConstraints": {}
+		}
+	},
+	"version": "7",
+	"views": {}
+}

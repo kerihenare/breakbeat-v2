@@ -1,0 +1,13 @@
+{
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"breakpoints": true,
+			"idx": 0,
+			"tag": "0000_flaky_manta",
+			"version": "7",
+			"when": 1781008734598
+		}
+	],
+	"version": "7"
+}

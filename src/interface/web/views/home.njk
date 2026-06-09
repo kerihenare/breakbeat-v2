@@ -1,0 +1,35 @@
+{% extends "layout.njk" %}
+{% block title %}Breakbeat — find coverage about a company{% endblock %}
+{% block content %}
+<div class="flex min-h-[60vh] flex-col items-center justify-center">
+	<div class="w-full max-w-md rounded-card border border-newsprint-border bg-newsprint-surface p-8 shadow-float">
+		<h1 class="text-3xl font-semibold leading-tight tracking-tight">Find coverage about a company</h1>
+		<p class="mt-2 text-sm text-ink-toned">
+			Enter a company name or domain. Breakbeat finds third-party coverage from the last 36 months and sorts it by trust.
+		</p>
+		{% if error %}<p role="alert" class="mt-4 text-sm text-accent-pink-text">{{ error }}</p>{% endif %}
+		<form method="post" action="/jobs" class="mt-6 space-y-4">
+			<div>
+				<label for="query" class="block text-sm font-medium">Company name or domain</label>
+				<input
+					id="query"
+					name="query"
+					value="{{ query }}"
+					required
+					autofocus
+					autocomplete="off"
+					placeholder="e.g. Aglow or aglow.com"
+					class="mt-1 w-full rounded-lg border border-newsprint-border bg-white px-3 py-2 text-sm placeholder:text-ink-dimmed focus:border-accent-blue focus:outline-none focus:ring-2 focus:ring-accent-blue/40"
+				/>
+			</div>
+			<button
+				type="submit"
+				class="w-full rounded-lg bg-ink-control px-4 py-2.5 text-sm font-medium text-newsprint-surface transition-colors hover:bg-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue"
+			>
+				Search
+			</button>
+		</form>
+	</div>
+	<a href="/searches" class="mt-6 text-sm text-ink-muted underline underline-offset-2 hover:text-ink">View past searches</a>
+</div>
+{% endblock %}

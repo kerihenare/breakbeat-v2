@@ -738,7 +738,7 @@ functions are the richest, cheapest target.
   a non-2xx / quota / network / timeout / empty extraction → `{ kind: "extractionFailure" }` (never
   throws, never an Exclusion); no scraped page text destined for a span attribute.
 
-**Repository (`result.repository.ts`) — Vitest integration, Testcontainers (real Postgres):**
+**Repository (`result.repository.ts`) — Vitest integration (`*.integration.test.ts`), shared dev-compose Postgres (ADR 0008):**
 - `setInterimMatchScore` overwrites the provisional `match_score` and touches no other column;
   `setProvisionalContentType` sets `content_type` only; `applyFullTextOutcome` sets `match_score`
   (final, overwriting interim) + `verification_status` + `content_type` + `sentiment` + `takeaway`
