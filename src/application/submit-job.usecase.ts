@@ -23,7 +23,16 @@ export class SubmitJobUseCase {
 		const anchor = toCompanyAnchor(input);
 		const job = Job.create(this.ids.uuidv7(), anchor, this.clock.now());
 		await this.jobs.save(job);
-		await this.queue.enqueue({ jobId: job.id });
+		try {
+			await this.queue.enqueue({ jobId: job.id });
+		} catch (enqueueError) {
+			// Enqueue failed (e.g. Redis down) after the pending row was written.
+			// No worker will ever pick it up, so compensate by removing the orphan.
+			// Compensation is best-effort: the enqueue failure is the real fault to
+			// surface, so a failed delete must not mask it.
+			await this.jobs.delete(job.id).catch(() => {});
+			throw enqueueError;
+		}
 		return job.id;
 	}
 }

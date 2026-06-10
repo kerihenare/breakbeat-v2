@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"emitDecoratorMetadata": false,
+		"experimentalDecorators": false,
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"types": [],
+		"useDefineForClassFields": true
+	},
+	"exclude": ["node_modules", "dist", "public"],
+	"extends": "./tsconfig.json",
+	"include": ["src/interface/web/assets/**/*.ts"]
+}

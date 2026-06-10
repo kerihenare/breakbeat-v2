@@ -1,6 +1,6 @@
-import type { ResolvedIdentity } from "../../domain/identity/resolved-identity";
 import type { Job } from "../../domain/job/job";
 import type { Warning } from "../../domain/job/warning";
+import type { ResolvedIdentity } from "../../domain/resolve/resolved-identity";
 
 /**
  * Shared run state threaded through the ordered stages by the StageRunner.

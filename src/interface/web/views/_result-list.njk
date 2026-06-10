@@ -1,0 +1,23 @@
+{% import "_macros.njk" as m %}
+<ul id="results-list" class="mt-4 overflow-hidden rounded-card border border-newsprint-border bg-newsprint-surface">
+	{% for r in rows %}
+	<li class="flex items-center gap-4 border-b border-newsprint-border px-5 py-3 last:border-0 hover:bg-newsprint-raised">
+		{{ m.contentIcon(r.contentType) }}
+		<div class="min-w-0 flex-1">
+			<a href="{{ basePath }}/results/{{ r.id }}" class="block truncate font-medium hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue">{{ r.title }}</a>
+			<div class="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-ink-toned">
+				<span>{{ r.contentType.label }}</span><span aria-hidden="true">·</span>
+				<span>{{ r.source }}</span><span aria-hidden="true">·</span>
+				<span>{{ r.date }}</span>
+				{% if r.verification != 'Verified' %}<span aria-hidden="true">·</span><span>{{ r.verification }}</span>{% endif %}
+				{% if r.sentiment %}<span aria-hidden="true">·</span><span>{{ r.sentiment.label }}</span>{% endif %}
+			</div>
+		</div>
+		{{ m.matchScore(r.matchScore) }}
+	</li>
+	{% else %}
+	<li class="px-5 py-6 text-sm text-ink-toned">
+		{% if selectedType %}No results of this type.{% elif isTerminal %}No included results.{% else %}Researching… results will appear here.{% endif %}
+	</li>
+	{% endfor %}
+</ul>

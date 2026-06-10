@@ -3,8 +3,10 @@ import {
 	check,
 	index,
 	integer,
+	jsonb,
 	pgEnum,
 	pgTable,
+	serial,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -68,6 +70,15 @@ export const sentimentEnum = pgEnum("sentiment", [
 	"neutral",
 	"negative",
 ]);
+export const domainProvenanceEnum = pgEnum("domain_provenance", [
+	"url_provided",
+	"brand_derived",
+]);
+// Search Result provenance (telemetry / debugging only — never a precision signal).
+export const resultSourceEnum = pgEnum("result_source", [
+	"tavily",
+	"web_search_backstop",
+]);
 
 export const jobs = pgTable(
 	"jobs",
@@ -101,9 +112,18 @@ export const warnings = pgTable(
 			.notNull()
 			.references(() => jobs.id, { onDelete: "cascade" }),
 		message: text("message").notNull(),
+		// Append-only position within the Job's warning list. The (job_id, seq)
+		// unique index makes warning sync idempotent under re-delivery: a re-saved
+		// aggregate re-inserts every warning keyed by its position, and duplicates
+		// are dropped by onConflictDoNothing rather than skipped by a positional
+		// count (which could lose or duplicate a warning if a partial set landed).
+		seq: integer("seq").notNull(),
 		type: text("type").notNull(),
 	},
-	(t) => [index("warnings_job_id_idx").on(t.jobId)],
+	(t) => [
+		index("warnings_job_id_idx").on(t.jobId),
+		uniqueIndex("warnings_job_id_seq_uq").on(t.jobId, t.seq),
+	],
 );
 
 export const results = pgTable(
@@ -128,6 +148,8 @@ export const results = pgTable(
 		publishedDate: timestamp("published_date", { withTimezone: true }),
 		sentiment: sentimentEnum("sentiment"),
 		snippet: text("snippet"),
+		// Search writes this on every Result it inserts (Tavily vs the backstop).
+		source: resultSourceEnum("source"),
 		sourceDomain: text("source_domain"),
 		// Born `included`; the only legal transition is to `excluded`.
 		status: resultStatusEnum("status").notNull().default("included"),
@@ -154,15 +176,83 @@ export const results = pgTable(
 );
 
 /**
- * Reserved for PRD 2 (Resolve). Foundation creates only this minimal parent
- * placeholder keyed by `job_id`; the Resolve migration owns the substantive
- * columns and child tables. Do not flesh this out here.
+ * The Resolve stage's durable output (PRD 2): one immutable, job-scoped Resolved
+ * Identity per Job, written after assembly so PRD 7 / re-runs can read it. A
+ * re-run is a new Job id with its own rows; Resolve never mutates a prior Job's
+ * identity. The JSONB columns hold Zod-validated structured output only — never
+ * raw BrandFetch payloads or scraped HTML (anti-echo, story 17).
  */
 export const resolvedIdentities = pgTable("resolved_identity", {
+	// BrandContext | null — the seven positioning fields, validated structured output.
+	brandContext: jsonb("brand_context"),
+	companyName: text("company_name").notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true })
 		.notNull()
 		.defaultNow(),
 	jobId: uuid("job_id")
 		.primaryKey()
 		.references(() => jobs.id, { onDelete: "cascade" }),
+	// The derived Negative Boost string; possibly empty (no collisions).
+	negativeBoost: text("negative_boost").notNull().default(""),
 });
+
+export const resolvedIdentityOwnDomains = pgTable(
+	"resolved_identity_own_domains",
+	{
+		domain: text("domain").notNull(),
+		id: serial("id").primaryKey(),
+		jobId: uuid("job_id")
+			.notNull()
+			.references(() => jobs.id, { onDelete: "cascade" }),
+		provenance: domainProvenanceEnum("provenance").notNull(),
+	},
+	(t) => [index("resolved_identity_own_domains_job_id_idx").on(t.jobId)],
+);
+
+export const resolvedIdentityHandles = pgTable(
+	"resolved_identity_handles",
+	{
+		handle: text("handle").notNull(),
+		id: serial("id").primaryKey(),
+		jobId: uuid("job_id")
+			.notNull()
+			.references(() => jobs.id, { onDelete: "cascade" }),
+		platform: text("platform").notNull(),
+		url: text("url").notNull(),
+	},
+	(t) => [index("resolved_identity_handles_job_id_idx").on(t.jobId)],
+);
+
+/**
+ * The Summarise stage's durable output (PRD 6): one immutable, job-scoped
+ * Job-level Summary per Job. `job_id` is the PRIMARY KEY (not a surrogate id),
+ * which structurally enforces the one-Summary-per-Job rule — a second insert for
+ * the same Job is a key conflict, not a silent duplicate. `summary` holds ONLY
+ * the Zod-validated digest string — never raw model output, never snippet text
+ * (anti-echo). A re-run is a new Job id with its own row.
+ */
+export const summaries = pgTable("summaries", {
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+	jobId: uuid("job_id")
+		.primaryKey()
+		.references(() => jobs.id, { onDelete: "cascade" }),
+	summary: text("summary").notNull(),
+});
+
+export const resolvedIdentityCollisions = pgTable(
+	"resolved_identity_collisions",
+	{
+		brandId: text("brand_id"),
+		// CollisionContext | null — validated structured output, never raw payloads.
+		context: jsonb("context"),
+		domain: text("domain").notNull(),
+		id: serial("id").primaryKey(),
+		jobId: uuid("job_id")
+			.notNull()
+			.references(() => jobs.id, { onDelete: "cascade" }),
+		name: text("name").notNull(),
+	},
+	(t) => [index("resolved_identity_collisions_job_id_idx").on(t.jobId)],
+);

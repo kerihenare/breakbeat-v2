@@ -85,4 +85,27 @@ describe("SubmitJobUseCase", () => {
 		expect(queue.enqueued).toHaveLength(1);
 		expect(queue.enqueued[0]?.jobId).toBe(id);
 	});
+
+	it("compensates the orphaned pending Job when enqueue fails", async () => {
+		const { jobs, queue, useCase } = makeUseCase();
+		queue.failNext = new Error("Redis down");
+		await expect(useCase.execute({ query: "Aglow" })).rejects.toThrow(
+			"Redis down",
+		);
+		// The pending Job that no worker will ever run must not be left behind.
+		expect(jobs.count).toBe(0);
+		expect(jobs.deletedIds).toHaveLength(1);
+	});
+
+	it("surfaces the enqueue failure even if compensation also fails", async () => {
+		const { jobs, queue, useCase } = makeUseCase();
+		queue.failNext = new Error("Redis down");
+		jobs.delete = async () => {
+			throw new Error("delete failed");
+		};
+		// The original enqueue error wins — compensation is best-effort.
+		await expect(useCase.execute({ query: "Aglow" })).rejects.toThrow(
+			"Redis down",
+		);
+	});
 });

@@ -24,6 +24,6 @@
 		"types": ["node"],
 		"useDefineForClassFields": false
 	},
-	"exclude": ["node_modules", "dist", "public"],
+	"exclude": ["node_modules", "dist", "public", "src/interface/web/assets"],
 	"include": ["src/**/*.ts"]
 }

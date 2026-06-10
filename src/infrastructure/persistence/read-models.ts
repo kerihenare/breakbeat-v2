@@ -1,14 +1,37 @@
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+	and,
+	count,
+	desc,
+	eq,
+	inArray,
+	isNull,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import type {
 	ContentTypeCount,
 	JobListItem,
 	JobsListReadModel,
 	Paged,
+	ProfileCardView,
+	ResolvedIdentityReadModel,
+	ResultDetailRow,
 	ResultReadRow,
 	ResultsReadModel,
+	SummaryReadModel,
+	SummaryView,
 } from "../../application/ports/read-models.port";
+import type { BrandContext } from "../../domain/resolve/brand-context";
 import type { Database } from "./database";
-import { jobs, results } from "./schema";
+import {
+	jobs,
+	resolvedIdentities,
+	resolvedIdentityCollisions,
+	resolvedIdentityHandles,
+	resolvedIdentityOwnDomains,
+	results,
+	summaries,
+} from "./schema";
 
 /** Columns the UI reads for a Result row (a subset — never extracted content). */
 const resultColumns = {
@@ -25,6 +48,25 @@ const resultColumns = {
 	url: results.url,
 	verificationStatus: results.verificationStatus,
 };
+
+/** The Page (individual Result) route also reads the snippet, extracted content + takeaway. */
+const resultDetailColumns = {
+	...resultColumns,
+	extractedContent: results.extractedContent,
+	snippet: results.snippet,
+	takeaway: results.takeaway,
+};
+
+/** The content-type filter for the included list. "unclassified" → the NULL bucket. */
+type ContentTypeValue = (typeof results.contentType.enumValues)[number];
+
+function contentTypeFilter(
+	contentType: string | null | undefined,
+): SQL | undefined {
+	if (contentType === null || contentType === undefined) return undefined;
+	if (contentType === "unclassified") return isNull(results.contentType);
+	return eq(results.contentType, contentType as ContentTypeValue);
+}
 
 export class DrizzleJobsListReadModel implements JobsListReadModel {
 	constructor(private readonly db: Database) {}
@@ -73,12 +115,18 @@ export class DrizzleResultsReadModel implements ResultsReadModel {
 		jobId: string,
 		page: number,
 		pageSize: number,
+		contentType?: string | null,
 	): Promise<Paged<ResultReadRow>> {
 		const offset = Math.max(0, (page - 1) * pageSize);
+		const where = and(
+			eq(results.jobId, jobId),
+			eq(results.status, "included"),
+			contentTypeFilter(contentType),
+		);
 		const items = await this.db
 			.select(resultColumns)
 			.from(results)
-			.where(and(eq(results.jobId, jobId), eq(results.status, "included")))
+			.where(where)
 			// Match Score desc, NULLs (Unverified) last; stable by insertion time.
 			.orderBy(
 				sql`${results.matchScore} desc nulls last`,
@@ -89,7 +137,7 @@ export class DrizzleResultsReadModel implements ResultsReadModel {
 		const [{ total }] = await this.db
 			.select({ total: count() })
 			.from(results)
-			.where(and(eq(results.jobId, jobId), eq(results.status, "included")));
+			.where(where);
 		return { items, total: Number(total) };
 	}
 
@@ -109,11 +157,84 @@ export class DrizzleResultsReadModel implements ResultsReadModel {
 			.from(results)
 			.where(and(eq(results.jobId, jobId), eq(results.status, "included")))
 			.groupBy(results.contentType);
-		return rows
-			.filter((r) => r.contentType !== null)
-			.map((r) => ({
-				contentType: r.contentType as string,
-				count: Number(r.c),
-			}));
+		// The NULL content-type bucket surfaces as the "unclassified" chip.
+		return rows.map((r) => ({
+			contentType: r.contentType ?? "unclassified",
+			count: Number(r.c),
+		}));
+	}
+
+	async detail(
+		jobId: string,
+		resultId: string,
+	): Promise<ResultDetailRow | null> {
+		const [row] = await this.db
+			.select(resultDetailColumns)
+			.from(results)
+			.where(and(eq(results.jobId, jobId), eq(results.id, resultId)))
+			.limit(1);
+		return row ?? null;
+	}
+}
+
+export class DrizzleResolvedIdentityReadModel
+	implements ResolvedIdentityReadModel
+{
+	constructor(private readonly db: Database) {}
+
+	async find(jobId: string): Promise<ProfileCardView | null> {
+		const [identity] = await this.db
+			.select()
+			.from(resolvedIdentities)
+			.where(eq(resolvedIdentities.jobId, jobId))
+			.limit(1);
+		if (!identity) return null;
+
+		const [domains, handles, [collision]] = await Promise.all([
+			this.db
+				.select({
+					domain: resolvedIdentityOwnDomains.domain,
+					provenance: resolvedIdentityOwnDomains.provenance,
+				})
+				.from(resolvedIdentityOwnDomains)
+				.where(eq(resolvedIdentityOwnDomains.jobId, jobId)),
+			this.db
+				.select({
+					handle: resolvedIdentityHandles.handle,
+					platform: resolvedIdentityHandles.platform,
+					url: resolvedIdentityHandles.url,
+				})
+				.from(resolvedIdentityHandles)
+				.where(eq(resolvedIdentityHandles.jobId, jobId)),
+			this.db
+				.select({ c: count() })
+				.from(resolvedIdentityCollisions)
+				.where(eq(resolvedIdentityCollisions.jobId, jobId)),
+		]);
+
+		// brand_context is validated structured output (BrandContext | null), stored as JSONB.
+		const bc = identity.brandContext as BrandContext | null;
+		return {
+			collisionCount: Number(collision?.c ?? 0),
+			companyName: identity.companyName,
+			description: bc?.description ?? null,
+			handles,
+			ownDomains: domains,
+			tagline: bc?.tagline ?? null,
+			tags: bc?.tags ?? [],
+		};
+	}
+}
+
+export class DrizzleSummaryReadModel implements SummaryReadModel {
+	constructor(private readonly db: Database) {}
+
+	async find(jobId: string): Promise<SummaryView | null> {
+		const [row] = await this.db
+			.select({ summary: summaries.summary })
+			.from(summaries)
+			.where(eq(summaries.jobId, jobId))
+			.limit(1);
+		return row ? { digest: row.summary } : null;
 	}
 }

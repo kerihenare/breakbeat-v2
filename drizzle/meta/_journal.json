@@ -1,13 +1,41 @@
 {
-	"dialect": "postgresql",
-	"entries": [
-		{
-			"breakpoints": true,
-			"idx": 0,
-			"tag": "0000_flaky_manta",
-			"version": "7",
-			"when": 1781008734598
-		}
-	],
-	"version": "7"
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "breakpoints": true,
+      "idx": 0,
+      "tag": "0000_flaky_manta",
+      "version": "7",
+      "when": 1781008734598
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781040354203,
+      "tag": "0001_goofy_strong_guy",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781041583228,
+      "tag": "0002_familiar_wolfpack",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781042537934,
+      "tag": "0003_colorful_the_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781045628347,
+      "tag": "0004_legal_dreadnoughts",
+      "breakpoints": true
+    }
+  ],
+  "version": "7"
 }

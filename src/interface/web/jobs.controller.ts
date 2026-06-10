@@ -15,14 +15,36 @@ import {
 	type JobRepository,
 } from "../../application/ports/job-repository.port";
 import {
+	RESOLVED_IDENTITY_READ_MODEL,
 	RESULTS_READ_MODEL,
+	type ResolvedIdentityReadModel,
 	type ResultsReadModel,
+	SUMMARY_READ_MODEL,
+	type SummaryReadModel,
 } from "../../application/ports/read-models.port";
 import type { SubmitJobUseCase } from "../../application/submit-job.usecase";
 import { SUBMIT_JOB } from "../di-tokens";
-import { buildResultLocals } from "./result.presenter";
+import { buildResultDetailLocals, buildResultLocals } from "./result.presenter";
 
 const PAGE_SIZE = 20;
+
+/** Content-type filter keys the chip strip can request (plus "unclassified"). */
+const FILTER_KEYS = new Set([
+	"news_article",
+	"trade_publication",
+	"blog_post",
+	"press_release",
+	"major_social_post",
+	"newsletter",
+	"podcast",
+	"other",
+	"unclassified",
+]);
+
+/** A chip value → the selected content type, or null ("all"/absent/unknown). */
+function normalizeType(raw: string | undefined): string | null {
+	return raw && FILTER_KEYS.has(raw) ? raw : null;
+}
 
 @Controller()
 export class JobsController {
@@ -30,6 +52,9 @@ export class JobsController {
 		@Inject(SUBMIT_JOB) private readonly submitJob: SubmitJobUseCase,
 		@Inject(JOB_REPOSITORY) private readonly jobs: JobRepository,
 		@Inject(RESULTS_READ_MODEL) private readonly results: ResultsReadModel,
+		@Inject(RESOLVED_IDENTITY_READ_MODEL)
+		private readonly identities: ResolvedIdentityReadModel,
+		@Inject(SUMMARY_READ_MODEL) private readonly summaries: SummaryReadModel,
 	) {}
 
 	/** Submit a Job (the enqueue entry point) and navigate to its Result page. */
@@ -66,6 +91,7 @@ export class JobsController {
 	async show(
 		@Param("id") id: string,
 		@Query("page") pageParam: string | undefined,
+		@Query("type") typeParam: string | undefined,
 		@Res() res: Response,
 	): Promise<void> {
 		const job = await this.jobs.findById(id);
@@ -74,14 +100,40 @@ export class JobsController {
 			return;
 		}
 		const page = Number(pageParam) || 1;
-		const [included, excluded, counts] = await Promise.all([
-			this.results.includedPage(id, page, PAGE_SIZE),
+		const selectedType = normalizeType(typeParam);
+		const [included, excluded, counts, profile, summary] = await Promise.all([
+			this.results.includedPage(id, page, PAGE_SIZE, selectedType),
 			this.results.excluded(id),
 			this.results.countsByContentType(id),
+			this.identities.find(id),
+			this.summaries.find(id),
 		]);
 		res.render(
 			"result",
-			buildResultLocals(job, included, excluded, counts, page),
+			buildResultLocals(job, included, excluded, counts, page, selectedType, {
+				profile,
+				summary,
+			}),
 		);
+	}
+
+	/** The Page (individual Result) route — trust facts, read-original, extracted content + takeaway. */
+	@Get("jobs/:id/results/:resultId")
+	async showResult(
+		@Param("id") id: string,
+		@Param("resultId") resultId: string,
+		@Res() res: Response,
+	): Promise<void> {
+		const job = await this.jobs.findById(id);
+		if (!job) {
+			res.status(404).render("not-found");
+			return;
+		}
+		const detail = await this.results.detail(id, resultId);
+		if (!detail) {
+			res.status(404).render("not-found");
+			return;
+		}
+		res.render("result-detail", buildResultDetailLocals(job, detail));
 	}
 }

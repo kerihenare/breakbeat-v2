@@ -4,6 +4,9 @@ import { defineConfig } from "vitest/config";
 // *.integration.test.ts (compose Postgres/Redis) and *.e2e.ts (Playwright) are excluded.
 export default defineConfig({
 	test: {
+		// Unit tests run with telemetry OFF, exactly as CI does (PRD 8): importing
+		// instrumentation.ts is then a safe no-op and the pipeline is byte-identical.
+		env: { OTEL_SDK_DISABLED: "true" },
 		environment: "node",
 		exclude: [
 			"**/node_modules/**",

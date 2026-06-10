@@ -1,4 +1,9 @@
 import { isTerminal } from "../domain/job/job-state";
+import type {
+	JobObserver,
+	TerminalState,
+} from "./observability/job-observer.port";
+import { NoOpJobObserver } from "./observability/no-op-job-observer";
 import { RunContext } from "./pipeline/run-context";
 import type { StageRunner } from "./pipeline/stage-runner";
 import type { Clock } from "./ports/clock.port";
@@ -30,6 +35,9 @@ export class RunJobUseCase {
 		private readonly publisher: JobEventPublisher,
 		private readonly clock: Clock,
 		private readonly runner: StageRunner,
+		// OTel-free job-level seam (ADR 0004). Defaults to the no-op so callers and
+		// tests that do not care about telemetry are unaffected.
+		private readonly observer: JobObserver = new NoOpJobObserver(),
 	) {}
 
 	async execute(jobId: string): Promise<void> {
@@ -48,6 +56,7 @@ export class RunJobUseCase {
 		}
 
 		const ctx = new RunContext(job);
+		const runStart = this.clock.now();
 		let reason: string | null = null;
 		try {
 			const outcome = await this.runner.run(ctx);
@@ -65,5 +74,11 @@ export class RunJobUseCase {
 		}
 		await this.jobs.save(job);
 		await this.publisher.publish({ jobId: job.id, kind: "status" });
+
+		// Job-level telemetry hook (status mapping + metrics + Bugsink). Runs after
+		// the committed write so a publish/observe failure never affects the Job.
+		const durationMs = this.clock.now().getTime() - runStart.getTime();
+		this.observer.onTerminal(job.state as TerminalState, durationMs);
+		if (reason !== null) this.observer.onFailure(new Error(reason));
 	}
 }

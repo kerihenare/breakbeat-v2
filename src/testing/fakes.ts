@@ -15,6 +15,7 @@ import { Job, type JobSnapshot } from "../domain/job/job";
 export class FakeJobRepository implements JobRepository {
 	private readonly store = new Map<string, JobSnapshot>();
 	readonly savedStates: string[] = [];
+	readonly deletedIds: string[] = [];
 
 	async save(job: Job): Promise<void> {
 		this.store.set(job.id, job.toSnapshot());
@@ -26,6 +27,11 @@ export class FakeJobRepository implements JobRepository {
 		return snapshot ? Job.fromPersistence(snapshot) : null;
 	}
 
+	async delete(id: string): Promise<void> {
+		this.store.delete(id);
+		this.deletedIds.push(id);
+	}
+
 	get count(): number {
 		return this.store.size;
 	}
@@ -33,8 +39,15 @@ export class FakeJobRepository implements JobRepository {
 
 export class FakeJobQueue implements JobQueue {
 	readonly enqueued: JobEnqueueMessage[] = [];
+	/** When set, the next `enqueue` rejects with this error (simulates Redis down). */
+	failNext: Error | null = null;
 
 	async enqueue(message: JobEnqueueMessage): Promise<void> {
+		if (this.failNext) {
+			const error = this.failNext;
+			this.failNext = null;
+			throw error;
+		}
 		this.enqueued.push(message);
 	}
 }

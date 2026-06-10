@@ -5,16 +5,38 @@
 <div class="flex items-start justify-between gap-4">
 	<div>
 		<h1 class="text-3xl font-semibold tracking-tight">{{ company }}</h1>
-		<div class="mt-2">{{ m.statusBadge(status) }}</div>
+		<div class="mt-2" id="job-status-badge">{{ m.statusBadge(status) }}</div>
 	</div>
 	<a href="/searches" class="shrink-0 text-sm text-ink-muted underline underline-offset-2 hover:text-ink">All searches</a>
 </div>
 
 <section class="mt-6 rounded-card border border-newsprint-border bg-newsprint-surface p-6">
 	<h2 class="text-sm font-medium text-ink-toned">Company profile</h2>
+	{% if resolvedIdentity %}
+	<p class="mt-2 text-base font-medium text-ink-strong">{{ resolvedIdentity.companyName }}</p>
+	{% if resolvedIdentity.tagline %}<p class="mt-1 text-sm text-ink">{{ resolvedIdentity.tagline }}</p>{% endif %}
+	{% if resolvedIdentity.description %}<p class="mt-2 text-sm text-ink-toned">{{ resolvedIdentity.description }}</p>{% endif %}
+	{% if resolvedIdentity.tags.length %}
+	<div class="mt-3 flex flex-wrap gap-1.5">
+		{% for t in resolvedIdentity.tags %}<span class="rounded-full bg-newsprint-sunken px-2 py-0.5 text-xs text-ink-toned">{{ t }}</span>{% endfor %}
+	</div>
+	{% endif %}
+	<dl class="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-xs text-ink-toned">
+		{% if resolvedIdentity.ownDomains.length %}
+		<div><dt class="text-ink-muted">Domains</dt><dd class="mt-0.5 text-ink">{% for d in resolvedIdentity.ownDomains %}{{ d.domain }}{% if not loop.last %}, {% endif %}{% endfor %}</dd></div>
+		{% endif %}
+		{% if resolvedIdentity.handles.length %}
+		<div><dt class="text-ink-muted">Social</dt><dd class="mt-0.5">{% for h in resolvedIdentity.handles %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer" class="text-accent-blue-text hover:underline">{{ h.platform }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</dd></div>
+		{% endif %}
+		{% if resolvedIdentity.collisionCount %}
+		<div><dt class="text-ink-muted">Name collisions considered</dt><dd class="mt-0.5 text-ink tabular-nums">{{ resolvedIdentity.collisionCount }}</dd></div>
+		{% endif %}
+	</dl>
+	{% else %}
 	<p class="mt-2 text-sm text-ink-toned">
 		Identity resolution runs in the Resolve stage. Anchored on <span class="font-medium text-ink">{{ company }}</span>.
 	</p>
+	{% endif %}
 	{% if warnings.length %}
 	<ul class="mt-4 space-y-1">
 		{% for w in warnings %}<li class="text-xs text-ink-toned">⚠ {{ w.message }}</li>{% endfor %}
@@ -38,39 +60,50 @@
 	<p class="mt-1 text-sm text-ink-toned">We looked and found no in-scope coverage in the last 36 months.</p>
 </section>
 {% else %}
+{# Page-1 of a running Job streams live over SSE (ADR 0006/0007); the island
+   persists across htmx region swaps and only mutates unfiltered page-1. #}
+<bb-result-stream data-job-id="{{ jobId }}" data-page-size="20">
+<div id="results-region">
 	{% if chips.length %}
-	<div class="mt-6 flex flex-wrap gap-2">
+	<div role="group" aria-label="Filter by content type" class="mt-6 flex flex-wrap gap-2">
 		{% for c in chips %}
-		<span class="inline-flex items-center gap-1.5 rounded-full border border-newsprint-border bg-newsprint-surface py-1 pl-1.5 pr-3 text-sm">
-			{{ m.contentIcon(c) }} {{ c.label }} <span class="text-ink-dimmed tabular-nums">{{ c.count }}</span>
-		</span>
+			{% if c.disabled %}
+			<span aria-disabled="true" class="inline-flex items-center gap-1.5 rounded-full border border-newsprint-border py-1 pl-1.5 pr-3 text-sm text-ink-dimmed opacity-60">
+				{% if c.view %}{{ m.contentIcon(c.view) }}{% endif %}{{ c.label }} <span class="tabular-nums">{{ c.count }}</span>
+			</span>
+			{% else %}
+			{% set href = basePath if c.key == 'all' else basePath + '?type=' + c.key %}
+			<a href="{{ href }}"
+				hx-get="{{ href }}" hx-target="#results-region" hx-select="#results-region" hx-swap="outerHTML" hx-push-url="true"
+				{% if c.selected %}aria-current="true"{% endif %}
+				class="inline-flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue
+					{%- if c.selected %} border-ink bg-ink text-newsprint-surface{% else %} border-newsprint-border bg-newsprint-surface hover:bg-newsprint-raised{% endif %}">
+				{% if c.view %}{{ m.contentIcon(c.view) }}{% endif %}{{ c.label }} <span class="tabular-nums {% if not c.selected %}text-ink-dimmed{% endif %}">{{ c.count }}</span>
+			</a>
+			{% endif %}
 		{% endfor %}
 	</div>
 	{% endif %}
 
-	<ul aria-live="polite" class="mt-4 overflow-hidden rounded-card border border-newsprint-border bg-newsprint-surface">
-		{% for r in rows %}
-		<li class="flex items-center gap-4 border-b border-newsprint-border px-5 py-3 last:border-0 hover:bg-newsprint-raised">
-			{{ m.contentIcon(r.contentType) }}
-			<div class="min-w-0 flex-1">
-				<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer" class="block truncate font-medium hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue">{{ r.title }}</a>
-				<div class="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-ink-toned">
-					<span>{{ r.contentType.label }}</span><span aria-hidden="true">·</span>
-					<span>{{ r.source }}</span><span aria-hidden="true">·</span>
-					<span>{{ r.date }}</span>
-					{% if r.verification != 'Verified' %}<span aria-hidden="true">·</span><span>{{ r.verification }}</span>{% endif %}
-					{% if r.sentiment %}<span aria-hidden="true">·</span><span>{{ r.sentiment.label }}</span>{% endif %}
-				</div>
-			</div>
-			{{ m.matchScore(r.matchScore) }}
-		</li>
-		{% else %}
-		<li class="px-5 py-6 text-sm text-ink-toned">
-			{% if isTerminal %}No included results.{% else %}Researching… results will appear here.{% endif %}
-		</li>
-		{% endfor %}
-	</ul>
-	{{ m.paginator(pagination, basePath) }}
+	{% include "_result-list.njk" %}
+
+	{# Paginator preserves the active content-type filter; htmx swaps the region in place. #}
+	{% if pagination.totalPages > 1 %}
+	{% set typeSuffix = ('&type=' + selectedType) if selectedType else '' %}
+	<nav class="mt-4 flex items-center justify-between text-sm" aria-label="Pagination">
+		<span class="text-ink-toned">{{ pagination.from }}–{{ pagination.to }} of {{ pagination.total }}</span>
+		<span class="flex gap-2">
+			{% if pagination.hasPrev %}
+			{% set prevHref = basePath + '?page=' + (pagination.page - 1) + typeSuffix %}
+			<a href="{{ prevHref }}" hx-get="{{ prevHref }}" hx-target="#results-region" hx-select="#results-region" hx-swap="outerHTML" hx-push-url="true" class="rounded-lg border border-newsprint-border-strong px-3 py-1 hover:bg-newsprint-sunken">Previous</a>
+			{% else %}<span class="rounded-lg border border-newsprint-border px-3 py-1 text-ink-dimmed">Previous</span>{% endif %}
+			{% if pagination.hasNext %}
+			{% set nextHref = basePath + '?page=' + (pagination.page + 1) + typeSuffix %}
+			<a href="{{ nextHref }}" hx-get="{{ nextHref }}" hx-target="#results-region" hx-select="#results-region" hx-swap="outerHTML" hx-push-url="true" class="rounded-lg border border-newsprint-border-strong px-3 py-1 hover:bg-newsprint-sunken">Next</a>
+			{% else %}<span class="rounded-lg border border-newsprint-border px-3 py-1 text-ink-dimmed">Next</span>{% endif %}
+		</span>
+	</nav>
+	{% endif %}
 
 	{% if excluded.length %}
 	<details class="mt-4">
@@ -78,12 +111,15 @@
 		<ul class="mt-2 overflow-hidden rounded-card border border-newsprint-border bg-newsprint-surface">
 			{% for r in excluded %}
 			<li class="flex items-center justify-between gap-4 border-b border-newsprint-border px-5 py-3 last:border-0">
-				<span class="min-w-0 flex-1 truncate text-sm text-ink-toned">{{ r.title }}</span>
+				<a href="{{ basePath }}/results/{{ r.id }}" class="min-w-0 flex-1 truncate text-sm text-ink-toned hover:underline">{{ r.title }}</a>
 				<span class="shrink-0 rounded-full bg-newsprint-sunken px-2 py-0.5 text-xs text-ink-toned">{{ r.exclusionReason }}</span>
 			</li>
 			{% endfor %}
 		</ul>
 	</details>
 	{% endif %}
+</div>
+</bb-result-stream>
 {% endif %}
 {% endblock %}
+{% block scripts %}<script type="module" src="/static/bb-result-stream.js"></script>{% endblock %}

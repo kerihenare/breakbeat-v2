@@ -1,0 +1,59 @@
+{% extends "layout.njk" %}
+{% import "_macros.njk" as m %}
+{% block title %}{{ row.title }} — {{ company }} — Breakbeat{% endblock %}
+{% block content %}
+<a href="{{ backPath }}" class="text-sm text-ink-muted underline underline-offset-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue">← Back to {{ company }}</a>
+
+<article class="mt-4 rounded-card border border-newsprint-border bg-newsprint-surface p-6">
+	<div class="flex items-start gap-4">
+		{{ m.contentIcon(row.contentType) }}
+		<div class="min-w-0 flex-1">
+			<h1 class="text-2xl font-semibold leading-tight tracking-tight">{{ row.title }}</h1>
+			<p class="mt-1 text-sm text-ink-muted">{{ row.source }}{% if row.date != '—' %} <span aria-hidden="true">·</span> {{ row.date }}{% endif %}</p>
+		</div>
+	</div>
+
+	{# Trust facts — each signal carries a word, never colour alone. #}
+	<dl class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+		<div>
+			<dt class="text-xs text-ink-muted">Match Score</dt>
+			<dd class="mt-1">{{ m.matchScore(row.matchScore) }}</dd>
+		</div>
+		<div>
+			<dt class="text-xs text-ink-muted">Verification</dt>
+			<dd class="mt-1 text-sm font-medium">{{ row.verification }}</dd>
+		</div>
+		<div>
+			<dt class="text-xs text-ink-muted">Type</dt>
+			<dd class="mt-1 text-sm font-medium">{{ row.contentType.label }}</dd>
+		</div>
+		<div>
+			<dt class="text-xs text-ink-muted">Sentiment</dt>
+			<dd class="mt-1 text-sm font-medium">{{ row.sentiment.label if row.sentiment else "—" }}</dd>
+		</div>
+	</dl>
+
+	<a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="mt-6 inline-flex items-center gap-1.5 rounded-lg bg-ink-control px-4 py-2 text-sm font-medium text-newsprint-surface transition-colors hover:bg-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue">
+		Read original <span aria-hidden="true">↗</span>
+	</a>
+
+	{% if takeaway %}
+	<section class="mt-6 border-t border-newsprint-border pt-6">
+		<h2 class="text-sm font-medium text-ink-toned">Takeaway</h2>
+		<p class="mt-2 text-sm">{{ takeaway }}</p>
+	</section>
+	{% endif %}
+
+	{% if extractedContent %}
+	<section class="mt-6 border-t border-newsprint-border pt-6">
+		<h2 class="text-sm font-medium text-ink-toned">Extracted content</h2>
+		<div class="mt-2 whitespace-pre-wrap text-sm text-ink-toned">{{ extractedContent }}</div>
+	</section>
+	{% elif snippet %}
+	<section class="mt-6 border-t border-newsprint-border pt-6">
+		<h2 class="text-sm font-medium text-ink-toned">Snippet</h2>
+		<p class="mt-2 text-sm text-ink-toned">{{ snippet }}</p>
+	</section>
+	{% endif %}
+</article>
+{% endblock %}

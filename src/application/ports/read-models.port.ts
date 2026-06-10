@@ -35,8 +35,15 @@ export interface Paged<T> {
 }
 
 export interface ContentTypeCount {
-	readonly contentType: string;
+	readonly contentType: string; // a content type, or "unclassified" for the NULL bucket
 	readonly count: number;
+}
+
+/** One Result with the full detail the Page (individual Result) route renders. */
+export interface ResultDetailRow extends ResultReadRow {
+	readonly snippet: string | null;
+	readonly extractedContent: string | null;
+	readonly takeaway: string | null;
 }
 
 /** The Results list (Jobs), most-recent first. */
@@ -48,13 +55,53 @@ export const JOBS_LIST_READ_MODEL = Symbol("JobsListReadModel");
 
 /** A Job's Results — included page (by Match Score desc), the excluded set, and chip counts. */
 export interface ResultsReadModel {
+	/**
+	 * Page-1-first slice of included Results by Match Score desc (NULLs last).
+	 * `contentType` filters to one type ("unclassified" → the NULL bucket);
+	 * undefined/null returns every included Result.
+	 */
 	includedPage(
 		jobId: string,
 		page: number,
 		pageSize: number,
+		contentType?: string | null,
 	): Promise<Paged<ResultReadRow>>;
 	excluded(jobId: string): Promise<readonly ResultReadRow[]>;
 	countsByContentType(jobId: string): Promise<readonly ContentTypeCount[]>;
+	/** One included-or-excluded Result with its extracted content + takeaway, or null. */
+	detail(jobId: string, resultId: string): Promise<ResultDetailRow | null>;
 }
 
 export const RESULTS_READ_MODEL = Symbol("ResultsReadModel");
+
+/** The Resolved Identity profile card the Result page shows (PRD 2 output, read by PRD 7). */
+export interface ProfileCardView {
+	readonly companyName: string;
+	readonly tagline: string | null;
+	readonly description: string | null;
+	readonly tags: readonly string[];
+	readonly ownDomains: readonly { domain: string; provenance: string }[];
+	readonly handles: readonly {
+		platform: string;
+		handle: string;
+		url: string;
+	}[];
+	readonly collisionCount: number;
+}
+
+export interface ResolvedIdentityReadModel {
+	find(jobId: string): Promise<ProfileCardView | null>;
+}
+
+export const RESOLVED_IDENTITY_READ_MODEL = Symbol("ResolvedIdentityReadModel");
+
+/** The Job-level Summary digest (PRD 6 output, read by PRD 7). */
+export interface SummaryView {
+	readonly digest: string;
+}
+
+export interface SummaryReadModel {
+	find(jobId: string): Promise<SummaryView | null>;
+}
+
+export const SUMMARY_READ_MODEL = Symbol("SummaryReadModel");

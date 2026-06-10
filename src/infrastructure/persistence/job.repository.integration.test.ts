@@ -13,7 +13,7 @@ import {
 	truncateAll,
 } from "../../testing/integration-db";
 import { DrizzleJobRepository } from "./job.repository";
-import { results } from "./schema";
+import { results, warnings } from "./schema";
 
 const db = getTestDatabase();
 const repo = new DrizzleJobRepository(db);
@@ -76,6 +76,51 @@ describe("DrizzleJobRepository (integration)", () => {
 		await repo.save(job); // re-save same state
 		const loaded = await repo.findById(job.id);
 		expect(loaded?.warnings).toHaveLength(1);
+	});
+
+	it("keyed (job_id, seq) sync inserts a missing earlier warning instead of skipping it (re-delivery safety)", async () => {
+		const id = uuidv7();
+		await repo.save(Job.create(id, nameOnlyAnchor("Aglow"), NOW));
+		// Simulate a partial/out-of-order prior persist: only the *second* warning
+		// landed, at seq 1. A positional count(=1) slice would skip warning[0]
+		// forever and re-insert warning[1]; the keyed sync must heal this.
+		await db
+			.insert(warnings)
+			.values({ jobId: id, message: "second", seq: 1, type: "b" });
+		const job = Job.fromPersistence({
+			anchor: nameOnlyAnchor("Aglow"),
+			createdAt: NOW,
+			failureReason: null,
+			id,
+			startedAt: NOW,
+			state: "running",
+			terminalAt: null,
+			warnings: [warning("a", "first"), warning("b", "second")],
+		});
+		await repo.save(job);
+		const loaded = await repo.findById(id);
+		expect(loaded?.warnings).toEqual([
+			{ message: "first", type: "a" },
+			{ message: "second", type: "b" },
+		]);
+	});
+
+	it("delete removes the Job and cascades to its warnings", async () => {
+		const job = Job.create(uuidv7(), nameOnlyAnchor("Aglow"), NOW);
+		job.start(NOW);
+		job.recordWarning(warning("a", "first"));
+		await repo.save(job);
+		await repo.delete(job.id);
+		expect(await repo.findById(job.id)).toBeNull();
+		const remaining = await db
+			.select()
+			.from(warnings)
+			.where(eq(warnings.jobId, job.id));
+		expect(remaining).toHaveLength(0);
+	});
+
+	it("delete of an unknown id is a no-op", async () => {
+		await expect(repo.delete(uuidv7())).resolves.toBeUndefined();
 	});
 
 	it("records a failed Job with its reason", async () => {

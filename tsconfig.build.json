@@ -5,6 +5,7 @@
 		"public",
 		"test",
 		"src/testing/**",
+		"src/interface/web/assets",
 		"**/*.test.ts",
 		"**/*.integration.test.ts",
 		"**/*.e2e.ts"

@@ -3,6 +3,7 @@ import { disambiguatedAnchor } from "../../domain/job/company-anchor";
 import { Job } from "../../domain/job/job";
 import { JobFailedError } from "../../domain/job/job-errors";
 import { warning } from "../../domain/job/warning";
+import { ResolvedIdentity } from "../../domain/resolve/resolved-identity";
 import { RunContext } from "./run-context";
 import type { Stage } from "./stage.port";
 import { StageRunner } from "./stage-runner";
@@ -123,12 +124,23 @@ describe("StageRunner — the warn-vs-fail mechanism", () => {
 	});
 });
 
-describe("RunContext resolvedIdentity slot (reserved for PRD 2)", () => {
+describe("RunContext resolvedIdentity slot (PRD 2)", () => {
+	const identity = (companyName: string) =>
+		ResolvedIdentity.assemble({
+			brandContext: null,
+			companyName,
+			nameCollisions: [],
+			negativeBoost: "",
+			ownDomains: [],
+			socialHandles: [],
+		});
+
 	it("is undefined until set, then readable, and set-once", () => {
 		const ctx = runningContext();
 		expect(ctx.resolvedIdentity).toBeUndefined();
-		ctx.setResolvedIdentity({ companyName: "Aglow" });
-		expect(ctx.resolvedIdentity).toEqual({ companyName: "Aglow" });
-		expect(() => ctx.setResolvedIdentity({ companyName: "Other" })).toThrow();
+		const aglow = identity("Aglow");
+		ctx.setResolvedIdentity(aglow);
+		expect(ctx.resolvedIdentity).toBe(aglow);
+		expect(() => ctx.setResolvedIdentity(identity("Other"))).toThrow();
 	});
 });

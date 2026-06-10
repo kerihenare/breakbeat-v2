@@ -3,14 +3,29 @@
  *
  * Loaded via `node --import ./dist/instrumentation.js` on BOTH entrypoints
  * (breakbeat-web and breakbeat-worker), before any application module is
- * imported. This is the load-before-app-modules ordering ADR 0004 / PRD 8
- * depend on.
+ * imported, so auto-instrumentation patches Express/ioredis/pg/undici before
+ * they are required.
  *
- * PRD 1 (Foundation) ships this as an EMPTY seam: it establishes the process
- * boundary and bootstrap order, but does not yet register the OTel Node SDK,
- * the enqueue→worker span link, metrics, or the otel-lgtm/Bugsink split.
- * Those land in PRD 8. Do not add tracing logic here without ADR 0004.
+ * PRD 8 turns this on: it builds the single NodeSDK (the only tracer-provider
+ * owner), warns if the process is running blind, and exposes the SDK instance so
+ * the shutdown sequence can flush it. Returns null + stays off under
+ * OTEL_SDK_DISABLED=true — the bound PipelineTelemetry is then the no-op and the
+ * pipeline is byte-identical.
  */
+import { buildSdk } from "./infrastructure/observability/sdk";
+import { initSentry } from "./infrastructure/observability/sentry";
+import { warnIfBlind } from "./infrastructure/observability/startup-check";
 
-// Intentionally empty in PRD 1. See docs/adr/0004-otel-instrumentation.md.
-export {};
+// pino is not yet wired this early; stdout is the floor.
+warnIfBlind(process.env, (msg) => console.warn(msg));
+
+// Errors-only Bugsink feed. skipOpenTelemetrySetup keeps it from owning a
+// tracer provider, so the OTel SDK below is the single owner. A blank DSN is a
+// no-op (the app still boots).
+initSentry(process.env.SENTRY_DSN);
+
+const sdk = buildSdk();
+sdk?.start();
+
+// Exposed so the shutdown sequence can flush this exact instance.
+export const otelSdk = sdk;

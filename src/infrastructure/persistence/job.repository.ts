@@ -1,4 +1,4 @@
-import { count, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { JobRepository } from "../../application/ports/job-repository.port";
 import { Job } from "../../domain/job/job";
 import { warning } from "../../domain/job/warning";
@@ -40,22 +40,32 @@ export class DrizzleJobRepository implements JobRepository {
 					target: jobs.id,
 				});
 
-			// Warnings are append-only: insert only those beyond what's persisted.
-			const [{ persisted }] = await tx
-				.select({ persisted: count() })
-				.from(warnings)
-				.where(eq(warnings.jobId, s.id));
-			const toAdd = s.warnings.slice(persisted);
-			if (toAdd.length > 0) {
-				await tx.insert(warnings).values(
-					toAdd.map((w) => ({
-						jobId: s.id,
-						message: w.message,
-						type: w.type,
-					})),
-				);
+			// Warnings are append-only and keyed by position. Re-insert the whole
+			// list every save, keyed by (job_id, seq); already-persisted entries
+			// are dropped by the unique index. This is idempotent under re-delivery
+			// — unlike a positional count, it never skips or duplicates a warning
+			// when only a partial set landed previously.
+			if (s.warnings.length > 0) {
+				await tx
+					.insert(warnings)
+					.values(
+						s.warnings.map((w, seq) => ({
+							jobId: s.id,
+							message: w.message,
+							seq,
+							type: w.type,
+						})),
+					)
+					.onConflictDoNothing({
+						target: [warnings.jobId, warnings.seq],
+					});
 			}
 		});
+	}
+
+	async delete(id: string): Promise<void> {
+		// Children (warnings, results, …) drop via FK ON DELETE CASCADE.
+		await this.db.delete(jobs).where(eq(jobs.id, id));
 	}
 
 	async findById(id: string): Promise<Job | null> {
@@ -69,7 +79,7 @@ export class DrizzleJobRepository implements JobRepository {
 			.select()
 			.from(warnings)
 			.where(eq(warnings.jobId, id))
-			.orderBy(warnings.createdAt, warnings.id);
+			.orderBy(warnings.seq);
 		return Job.fromPersistence({
 			anchor: rowToAnchor(row),
 			createdAt: row.createdAt,

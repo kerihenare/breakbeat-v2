@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-/* Scan the server-rendered templates for utility classes. */
+/* Scan the server-rendered templates + client islands for utility classes. */
 @source "../interface/web/views/**/*.njk";
+@source "../interface/web/assets/**/*.ts";
 
 /*
  * Breakbeat design tokens (DESIGN.md). Warm newsprint ground, ink-on-paper,
@@ -43,5 +44,73 @@
 	body {
 		background-color: var(--color-newsprint);
 		color: var(--color-ink);
+	}
+}
+
+@layer components {
+	/* The <bb-autocomplete> listbox (PRD 7 input-time disambiguation). Light-DOM,
+	 * absolutely positioned under the query input so it never reflows the form. */
+	.bb-ac-list {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: calc(100% + 4px);
+		z-index: 20;
+		margin: 0;
+		padding: 4px;
+		list-style: none;
+		max-height: 18rem;
+		overflow-y: auto;
+		background-color: var(--color-newsprint-surface);
+		border: 1px solid var(--color-newsprint-border-strong);
+		border-radius: 12px;
+		box-shadow: var(--shadow-float);
+	}
+	.bb-ac-list[hidden] {
+		display: none;
+	}
+	.bb-ac-option {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.5rem 0.625rem;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		color: var(--color-ink);
+		cursor: pointer;
+	}
+	.bb-ac-option[aria-selected="true"] {
+		background-color: var(--color-newsprint-sunken);
+	}
+	.bb-ac-option__domain {
+		flex: none;
+		font-size: 0.75rem;
+		color: var(--color-ink-dimmed);
+	}
+	.bb-ac-option--name {
+		color: var(--color-ink-muted);
+	}
+	.bb-ac-option--name strong {
+		color: var(--color-ink);
+		font-weight: 600;
+	}
+
+	/* Brief entrance when <bb-result-stream> swaps in a live page-1 update. */
+	.results-updated {
+		animation: bb-result-fade 180ms ease-out;
+	}
+	@keyframes bb-result-fade {
+		from {
+			opacity: 0.4;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.results-updated {
+			animation: none;
+		}
 	}
 }
